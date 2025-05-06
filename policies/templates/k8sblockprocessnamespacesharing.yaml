@@ -1,0 +1,29 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  annotations:
+    description: Prohibits Pod specs with `shareProcessNamespace` set to `true`. This
+      avoids scenarios where all containers in a Pod share a PID namespace and can
+      access each other's filesystem and memory.
+    metadata.gatekeeper.sh/title: Block Process Namespace Sharing
+    metadata.gatekeeper.sh/version: 1.0.1
+  labels:
+  name: k8sblockprocessnamespacesharing
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sBlockProcessNamespaceSharing
+      validation:
+        legacySchema: false
+  targets:
+  - rego: |
+      package k8sblockprocessnamespacesharing
+
+      violation[{"msg": msg}] {
+        input.review.kind.group == ""
+        input.review.kind.kind == "Pod"
+        input.review.object.spec.shareProcessNamespace == true
+        msg := "Process namespace sharing is not allowed"
+      }
+    target: admission.k8s.gatekeeper.sh

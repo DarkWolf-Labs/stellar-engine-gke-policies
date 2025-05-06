@@ -1,0 +1,116 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  annotations:
+    description: Requires that containers are not best-effort (by setting cpu and
+      memory requests) and following burstable best practices (memory request must
+      exactly equal limit).  Optionally, annotation keys can be configured to permit
+      skipping the various validations.
+    metadata.gatekeeper.sh/title: Requires Containers are not Best-effort and Following
+      Burstable Best Practices
+    metadata.gatekeeper.sh/version: 1.0.5
+  labels:
+  name: k8spodresourcesbestpractices
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sPodResourcesBestPractices
+      validation:
+        legacySchema: false
+        openAPIV3Schema:
+          properties:
+            exemptImages:
+              description: A list of exempt Images.
+              items:
+                type: string
+              type: array
+            skipBestEffortValidationAnnotationKey:
+              description: Optional annotation key to skip best-effort container validation.
+              type: string
+            skipBurstableValidationAnnotationKey:
+              description: Optional annotation key to skip burstable container validation.
+              type: string
+            skipResourcesBestPracticesValidationAnnotationKey:
+              description: Optional annotation key to skip both best-effort and burstable
+                validation.
+              type: string
+          type: object
+  targets:
+  - rego: |
+      package k8spodresourcesbestpractices
+
+      violation[{"msg": msg}] {
+        skip_validation("skipResourcesBestPracticesValidationAnnotationKey")
+        input.review.kind.group == ""
+        input.review.kind.kind == "Pod"
+        field_violation[{"field": {"containers", "initContainers"}[_], "msg": msg}]
+      }
+
+      field_violation[{"msg": msg, "field": field}] {
+        some field
+        skip_validation("skipBestEffortValidationAnnotationKey")
+        container := input.review.object.spec[field][_]
+        not is_exempt_image(container)
+        types := {"cpu", "memory"}[_]
+        object.get(container, ["resources", "requests", types], "") == ""
+        object.get(container, ["resources", "limits", types], "") == ""
+        msg := sprintf("Container <%v> must set <%v> request.", [container.name, types])
+      }
+
+      field_violation[{"msg": msg, "field": field}] {
+        some field
+        skip_validation("skipBurstableValidationAnnotationKey")
+        container := input.review.object.spec[field][_]
+        not is_exempt_image(container)
+        not object.get(container, ["resources", "requests", "memory"], "") == ""
+        object.get(container, ["resources", "limits", "memory"], "") == ""
+        msg := sprintf("Container <%v> must set memory limit. Memory limit must equal memory request. Consider setting an extra buffer to avoid OOM Errors.", [container.name])
+      }
+
+      field_violation[{"msg": msg, "field": field}] {
+        some field
+        skip_validation("skipBurstableValidationAnnotationKey")
+        container := input.review.object.spec[field][_]
+        not is_exempt_image(container)
+        mem_req := object.get(container, ["resources", "requests", "memory"], null)
+        mem_lim := object.get(container, ["resources", "limits", "memory"], null)
+        canonify_bytes(mem_req) != canonify_bytes(mem_lim)
+        msg := sprintf("Container <%v> memory request <%v> must exactly equal memory limit <%v>.", [container.name, mem_req, mem_lim])
+      }
+
+      canonify_bytes(n) := n_bytes {
+        is_number_or_e_notation(n)
+        n_bytes := to_number(n)
+      }
+
+      canonify_bytes(n) := n_bytes {
+        is_number_with_suffix(n)
+        n_bytes := units.parse_bytes(sprintf("%vB", [n]))
+      }
+
+      is_number_or_e_notation(n) {
+        regex.match(`^[0-9]*(\.?[0-9]+)?(e[-+]?[0-9]+)?$`, sprintf("%v", [n]))
+      }
+
+      is_number_with_suffix(n) {
+        regex.match(`^[0-9]+(\.[0-9]+)?[EePpTtGgMmKk]i?$`, sprintf("%v", [n]))
+      }
+
+      skip_validation(conf_key) {
+        annotation_key := object.get(input, ["parameters", conf_key], null)
+        not input.review.object.metadata.annotations[annotation_key] == "true"
+      }
+
+      is_exempt_image(container) {
+        exempt_image := input.parameters.exemptImages[_]
+        not endswith(exempt_image, "*")
+        container.image == exempt_image
+      }
+
+      is_exempt_image(container) {
+        exempt_image := input.parameters.exemptImages[_]
+        endswith(exempt_image, "*")
+        startswith(container.image, trim_suffix(exempt_image, "*"))
+      }
+    target: admission.k8s.gatekeeper.sh

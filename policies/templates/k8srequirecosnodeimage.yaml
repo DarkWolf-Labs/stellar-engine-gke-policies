@@ -1,0 +1,56 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  annotations:
+    description: Enforces the use of Container-Optimized OS from Google on Nodes.
+    metadata.gatekeeper.sh/title: Require COS Node Image
+    metadata.gatekeeper.sh/version: 1.1.1
+  labels:
+  name: k8srequirecosnodeimage
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sRequireCosNodeImage
+      validation:
+        legacySchema: false
+        openAPIV3Schema:
+          properties:
+            exemptOsImages:
+              description: A list of exempt OS Images.
+              items:
+                type: string
+              type: array
+          type: object
+  targets:
+  - rego: |
+      package k8srequirecosnodeimage
+
+      violation[{"msg": msg}] {
+        input.review.kind.kind == "Node"
+        node_name := input.review.object.metadata.name
+        not is_exempt_image(input.review.object)
+        does_not_have_cos_image(input.review.object)
+        msg := sprintf("Node <%v> has an OS Image other than Container-Optimized OS from Google", [node_name])
+      }
+
+      does_not_have_cos_image(node_object) {
+        node_object.status.nodeInfo.osImage != "Container-Optimized OS from Google"
+      }
+
+      does_not_have_cos_image(node_object) {
+        not node_object.status.nodeInfo.osImage
+      }
+
+      is_exempt_image(node_object) {
+        exempt_image := input.parameters.exemptOsImages[_]
+        not endswith(exempt_image, "*")
+        node_object.status.nodeInfo.osImage == exempt_image
+      }
+
+      is_exempt_image(node_object) {
+        exempt_image := input.parameters.exemptOsImages[_]
+        endswith(exempt_image, "*")
+        startswith(node_object.status.nodeInfo.osImage, trim_suffix(exempt_image, "*"))
+      }
+    target: admission.k8s.gatekeeper.sh

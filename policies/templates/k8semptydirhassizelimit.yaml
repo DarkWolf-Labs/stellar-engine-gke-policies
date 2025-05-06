@@ -1,0 +1,121 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  annotations:
+    description: Requires that any `emptyDir` volumes specify a `sizeLimit`. Optionally,
+      a `maxSizeLimit` parameter can be supplied in the constraint to specify a maximum
+      allowable size limit.
+    metadata.gatekeeper.sh/title: Empty Directory has Size Limit
+    metadata.gatekeeper.sh/version: 1.0.5
+  labels:
+  name: k8semptydirhassizelimit
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sEmptyDirHasSizeLimit
+      validation:
+        legacySchema: false
+        openAPIV3Schema:
+          properties:
+            exemptVolumesRegex:
+              description: Exempt Volume names as regex match.
+              items:
+                type: string
+              type: array
+            maxSizeLimit:
+              description: When set, the declared size limit for each volume must
+                be less than `maxSizeLimit`.
+              type: string
+          type: object
+  targets:
+  - rego: |
+      package k8semptydirhassizelimit
+
+      violation[{"msg": msg}] {
+        some i
+        input.review.kind.group == ""
+        input.review.kind.kind == "Pod"
+        volume := input.review.object.spec.volumes[i]
+        volume.emptyDir
+        not volume.emptyDir.sizeLimit
+        not is_exempt_volume(volume.name)
+        msg := sprintf("emptyDir volume <%v> must have a size limit", [volume_identifier(volume, i)])
+      }
+
+      violation[{"msg": msg}] {
+        some i
+        input.review.kind.group == ""
+        input.review.kind.kind == "Pod"
+        volume := input.review.object.spec.volumes[i]
+        canonify_bytes(volume.emptyDir.sizeLimit) > canonify_bytes(input.parameters.maxSizeLimit)
+        not is_exempt_volume(volume.name)
+        msg := sprintf("emptyDir volume <%v> size limit <%v> exceeds maximum <%v>", [volume_identifier(volume, i), volume.emptyDir.sizeLimit, input.parameters.maxSizeLimit])
+      }
+
+      violation[{"msg": msg}] {
+        some i
+        input.review.kind.group == ""
+        input.review.kind.kind == "Pod"
+        volume := input.review.object.spec.volumes[i]
+        not is_number_or_e_notation(volume.emptyDir.sizeLimit)
+        not is_number_with_suffix(volume.emptyDir.sizeLimit)
+        not is_exempt_volume(volume.name)
+        msg := sprintf("emptyDir volume <%v> size limit <%v> could not be parsed as bytes", [volume_identifier(volume, i), volume.emptyDir.sizeLimit])
+      }
+
+      violation[{"msg": msg}] {
+        input.review.kind.group == ""
+        input.review.kind.kind == "Pod"
+        not is_number_or_e_notation(input.parameters.maxSizeLimit)
+        not is_number_with_suffix(input.parameters.maxSizeLimit)
+        msg := sprintf("emptyDir volume max size limit <%v> could not be parsed as bytes", [input.parameters.maxSizeLimit])
+      }
+
+      readable_volume_name(name) {
+        name != false
+        name != null
+        name != ""
+        name
+      }
+
+      volume_identifier(volume, _) := name {
+        readable_volume_name(volume.name)
+        name := volume.name
+      }
+
+      volume_identifier(volume, i) := name {
+        not readable_volume_name(volume.name)
+        name := i
+      }
+
+      is_number_or_e_notation(n) {
+        regex.match(`^[0-9]*(\.?[0-9]+)?(e[-+]?[0-9]+)?$`, sprintf("%v", [n]))
+      }
+
+      is_number_with_suffix(n) {
+        regex.match(`^[0-9]+(\.[0-9]+)?[EePpTtGgMmKk]i?$`, sprintf("%v", [n]))
+      }
+
+      canonify_bytes(n) := n_bytes {
+        is_number_or_e_notation(n)
+        n_bytes := to_number(n)
+      }
+
+      canonify_bytes(n) := n_bytes {
+        is_number_with_suffix(n)
+        n_bytes := units.parse_bytes(sprintf("%vB", [n]))
+      }
+
+      is_exempt_volume(name) {
+        parameters := object.get(input, "parameters", {})
+        exemptVolumes := object.get(parameters, "exemptVolumesRegex", [])
+        count(exemptVolumes) > 0
+        exemptVolume := exemptVolumes[_]
+        has_regex_match(name, exemptVolume)
+      }
+
+      has_regex_match(subject, exempt) {
+        regex.match(exempt, subject)
+      }
+    target: admission.k8s.gatekeeper.sh

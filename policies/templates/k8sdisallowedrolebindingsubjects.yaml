@@ -1,0 +1,55 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  annotations:
+    description: Prohibits RoleBindings or ClusterRoleBindings with subjects matching
+      any `disallowedSubjects` passed as parameters.
+    metadata.gatekeeper.sh/title: Disallowed Rolebinding Subjects
+    metadata.gatekeeper.sh/version: 1.0.1
+  labels:
+  name: k8sdisallowedrolebindingsubjects
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sDisallowedRoleBindingSubjects
+      validation:
+        legacySchema: false
+        openAPIV3Schema:
+          properties:
+            disallowedSubjects:
+              description: A list of subjects that cannot appear in a RoleBinding.
+              items:
+                properties:
+                  apiGroup:
+                    description: The Kubernetes API group of the disallowed role binding
+                      subject. Currently ignored.
+                    type: string
+                  kind:
+                    description: The kind of the disallowed role binding subject.
+                    type: string
+                  name:
+                    description: The name of the disallowed role binding subject.
+                    type: string
+                type: object
+              type: array
+          type: object
+  targets:
+  - rego: |
+      package k8sdisallowedrolebindingsubjects
+
+      is_rolebinding_or_cluster_rolebinding(kind) {
+        kind.group == "rbac.authorization.k8s.io"
+        kinds := {"RoleBinding", "ClusterRoleBinding"}
+        kinds[kind.kind]
+      }
+
+      violation[{"msg": msg}] {
+        is_rolebinding_or_cluster_rolebinding(input.review.kind)
+        disallowedSubject := input.parameters.disallowedSubjects[_]
+        inputSubject := input.review.object.subjects[_]
+        disallowedSubject.name == inputSubject.name
+        disallowedSubject.kind == inputSubject.kind
+        msg := sprintf("<%v> has disallowed kind <%v> and name <%v>", [input.review.object.metadata.name, inputSubject.kind, inputSubject.name])
+      }
+    target: admission.k8s.gatekeeper.sh

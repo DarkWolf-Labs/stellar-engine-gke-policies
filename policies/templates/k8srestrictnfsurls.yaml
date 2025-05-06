@@ -1,0 +1,48 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  annotations:
+    description: Disallows resources from containing NFS URLS unless specified.
+    metadata.gatekeeper.sh/title: Restrict NFS URLs
+    metadata.gatekeeper.sh/version: 1.0.1
+  labels:
+  name: k8srestrictnfsurls
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sRestrictNfsUrls
+      validation:
+        legacySchema: false
+        openAPIV3Schema:
+          properties:
+            allowedNfsUrls:
+              description: A list of allowed NFS URLs
+              items:
+                type: string
+              type: array
+          type: object
+  targets:
+  - rego: |
+      package k8srestrictnfsurls
+
+      violation[{"msg": msg}] {
+        input.review.kind.kind = "Pod"
+        configuredUrls := input.review.object.spec.volumes[_]
+        configuredUrl := sprintf("%v%v", [configuredUrls.nfs.server, configuredUrls.nfs.path])
+        not is_allowed(configuredUrl)
+        msg := sprintf("<%v> NFS URL is restricted", [configuredUrl])
+      }
+
+      is_allowed(configuredUrl) {
+        allowedUrl := input.parameters.allowedNfsUrls[_]
+        not endswith(allowedUrl, "*")
+        configuredUrl == allowedUrl
+      }
+
+      is_allowed(configuredUrl) {
+        allowedUrl := input.parameters.allowedNfsUrls[_]
+        endswith(allowedUrl, "*")
+        startswith(configuredUrl, trim_suffix(allowedUrl, "*"))
+      }
+    target: admission.k8s.gatekeeper.sh

@@ -1,0 +1,65 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  annotations:
+    description: Enforce all PeerAuthentications cannot overwrite strict mtls. Reference
+      to https://istio.io/latest/docs/ops/best-practices/security/#mutual-tls.
+    metadata.gatekeeper.sh/title: ASM Peer Authentication Strict mTLS
+    metadata.gatekeeper.sh/version: 1.0.3
+  labels:
+  name: asmpeerauthnstrictmtls
+spec:
+  crd:
+    spec:
+      names:
+        kind: AsmPeerAuthnStrictMtls
+      validation:
+        legacySchema: false
+        openAPIV3Schema:
+          properties:
+            strictnessLevel:
+              description: Level of PeerAuthentication strictness.
+              enum:
+              - Low
+              - High
+              type: string
+          type: object
+  targets:
+  - rego: |
+      package asm.security.peerauthentication
+
+      spec := input.review.object.spec
+
+      valid_modes := {"UNSET", "STRICT"}
+
+      ################
+      # Strict mTLS
+      ################
+
+      # mTLS mode can only be set to either UNSET or STRICT for all PeerAuthentications in the mesh.
+
+      violation[{"msg": msg}] {
+        has_strictness_set_to_high
+        is_peerauthentication(input.review.kind)
+        count({spec.mtls.mode} - valid_modes) > 0
+        msg := "PeerAuthentication mtls mode can only be set to UNSET or STRICT"
+      }
+
+      # port level mtls
+      violation[{"msg": msg}] {
+        some port
+        input.parameters.strictnessLevel == "High"
+        is_peerauthentication(input.review.kind)
+        count({spec.portLevelMtls[port].mode} - valid_modes) > 0
+        msg := sprintf("PeerAuthentication port <%v> has invalid mtls mode <%v>, it can only be set to UNSET or STRICT", [port, spec.portLevelMtls[port].mode])
+      }
+
+      is_peerauthentication(kind) {
+        kind.kind == "PeerAuthentication"
+        kind.group == "security.istio.io"
+      }
+
+      has_strictness_set_to_high {
+        input.parameters.strictnessLevel == "High"
+      }
+    target: admission.k8s.gatekeeper.sh

@@ -1,0 +1,33 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  annotations:
+    description: Disallows object of forbidden types.
+    metadata.gatekeeper.sh/title: Block Objects of Type
+    metadata.gatekeeper.sh/version: 1.0.1
+  labels:
+  name: k8sblockobjectsoftype
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sBlockObjectsOfType
+      validation:
+        legacySchema: false
+        openAPIV3Schema:
+          properties:
+            forbiddenTypes:
+              items:
+                type: string
+              type: array
+          type: object
+  targets:
+  - rego: |
+      package k8sblockobjectsoftype
+
+      violation[{"msg": msg}] {
+        objectType := input.review.object.type
+        input.parameters.forbiddenTypes[_] = objectType
+        msg := sprintf("Object of type: %v is not allowed", [objectType])
+      }
+    target: admission.k8s.gatekeeper.sh

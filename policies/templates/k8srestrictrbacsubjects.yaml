@@ -1,0 +1,76 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  annotations:
+    description: Restricts the use of names in RBAC subjects to permitted values.
+    metadata.gatekeeper.sh/title: Restrict RBAC Subjects
+    metadata.gatekeeper.sh/version: 1.0.3
+  labels:
+  name: k8srestrictrbacsubjects
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sRestrictRbacSubjects
+      validation:
+        legacySchema: false
+        openAPIV3Schema:
+          properties:
+            allowedSubjects:
+              description: The list of names permitted in RBAC subjects.
+              items:
+                properties:
+                  name:
+                    description: The exact-name or the pattern of the allowed subject
+                    type: string
+                  regexMatch:
+                    description: The flag to allow a regular expression based match
+                      on the name.
+                    type: boolean
+                type: object
+              type: array
+          type: object
+  targets:
+  - rego: |
+      package k8srestrictrbacsubjects
+
+      violation[{"msg": msg}] {
+        is_rolebinding_or_cluster_rolebinding(input.review.kind)
+        subject := has_not_allowed_subject(input.review.object.subjects[_])
+        msg := sprintf("%v <%v> contains restricted subject: %v", [input.review.kind.kind, input.review.object.metadata.name, subject])
+      }
+
+      is_rolebinding_or_cluster_rolebinding(kind) {
+        kind.group == "rbac.authorization.k8s.io"
+        kinds := {"RoleBinding", "ClusterRoleBinding"}
+        kinds[kind.kind]
+      }
+
+      has_not_allowed_subject(subject) := subject {
+        allowedSubjects := object.get(object.get(input, "parameters", {}), "allowedSubjects", {})
+        not subject_is_allowed(subject, allowedSubjects)
+      }
+
+      subject_is_allowed(subject, allowedSubjects) {
+        allowedSubject := allowedSubjects[_]
+        has_exact_or_regex_match(allowedSubject, subject.name)
+      }
+
+      has_exact_or_regex_match(allowedSubject, subject_name) {
+        not should_exactly_match(allowedSubject)
+        regex.match(allowedSubject.name, subject_name)
+      }
+
+      has_exact_or_regex_match(allowedSubject, subject_name) {
+        should_exactly_match(allowedSubject)
+        allowedSubject.name == subject_name
+      }
+
+      should_exactly_match(allowedSubject) {
+        not allowedSubject.regexMatch
+      }
+
+      should_exactly_match(allowedSubject) {
+        allowedSubject.regexMatch == false
+      }
+    target: admission.k8s.gatekeeper.sh

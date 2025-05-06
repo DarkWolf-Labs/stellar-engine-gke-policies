@@ -1,0 +1,59 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  annotations:
+    description: Requires containers run as non-root users. For more information,
+      see https://kubernetes.io/docs/concepts/security/pod-security-standards/
+    metadata.gatekeeper.sh/title: Requires containers run as non-root users.
+    metadata.gatekeeper.sh/version: 1.0.0
+  labels:
+  name: k8spssrunasnonroot
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sPSSRunAsNonRoot
+      validation:
+        legacySchema: false
+  targets:
+  - rego: |
+      package k8spssrunasnonroot
+
+      # Require Pod set spec.securityContext.runAsNonRoot == true
+      violation[{"msg": msg}] {
+        input.review.kind.kind == "Pod"
+        object.get(input.review.object, ["spec", "securityContext", "runAsNonRoot"], null) != true
+        msg := sprintf("Pods are required to run as non-root users: %v", [input.review.object.metadata.name])
+      }
+
+      # Require Container .securityContext.runAsNonRoot == true or null if Pod pec.securityContext.runAsNonRoot == true
+      violation[{"msg": msg}] {
+        input.review.kind.kind == "Pod"
+        c := input_containers[_]
+        not_runasnonroot(c)
+        msg := sprintf("Containers are required to run as non-root users: %v", [c.name])
+      }
+
+      # returns true if runAsNonRoot is false for container
+      not_runasnonroot(c) {
+        c.securityContext.runAsNonRoot == false
+      }
+
+      # returns true if runAsNonRoot is not specified for container AND is not set to true on pod
+      not_runasnonroot(c) {
+        object.get(c, ["securityContext", "runAsNonRoot"], null) == null
+        object.get(input.review.object, ["spec", "securityContext", "runAsNonRoot"], null) != true
+      }
+
+      input_containers[c] {
+        c := input.review.object.spec.containers[_]
+      }
+
+      input_containers[c] {
+        c := input.review.object.spec.initContainers[_]
+      }
+
+      input_containers[c] {
+        c := input.review.object.spec.ephemeralContainers[_]
+      }
+    target: admission.k8s.gatekeeper.sh

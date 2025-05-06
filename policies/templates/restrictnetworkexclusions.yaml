@@ -1,0 +1,184 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  annotations:
+    description: |-
+      Controls which inbound ports, outbound ports, and outbound IP ranges can be
+      excluded from Istio network capture. Ports and IP ranges that bypass Istio
+      network capture are not handled by the Istio proxy and are not subject to
+      Istio mTLS authentication, authorization policy, and other Istio features.
+      This constraint can be used to apply restrictions to the use of the
+      following annotations:
+
+      * `traffic.sidecar.istio.io/excludeInboundPorts`
+      * `traffic.sidecar.istio.io/excludeOutboundPorts`
+      * `traffic.sidecar.istio.io/excludeOutboundIPRanges`
+
+      See https://istio.io/latest/docs/reference/config/annotations/.
+
+      When restricting outbound IP ranges, the constraint calculates whether excluded
+      IP ranges match or are a subset of the allowed IP range exclusions.
+
+      When using this constraint all inbound ports, outbound ports and outbound IP
+      ranges must always be included by either setting the corresponding "include"
+      annotations to `"*"` or leaving them unset. Setting any of the following
+      annotations to anything other than `"*"` is not allowed:
+
+      * `traffic.sidecar.istio.io/includeInboundPorts`
+      * `traffic.sidecar.istio.io/includeOutboundPorts`
+      * `traffic.sidecar.istio.io/includeOutboundIPRanges`
+
+      This constraint always allows port 15020 to be excluded because the Istio sidecar
+      injector always adds it to the `traffic.sidecar.istio.io/excludeInboundPorts`
+      annotation so that it can be used for health checking.
+    metadata.gatekeeper.sh/title: Restrict Network Exclusions
+    metadata.gatekeeper.sh/version: 1.0.2
+  labels:
+  name: restrictnetworkexclusions
+spec:
+  crd:
+    spec:
+      names:
+        kind: RestrictNetworkExclusions
+      validation:
+        legacySchema: false
+        openAPIV3Schema:
+          properties:
+            allowedInboundPortExclusions:
+              description: A list of ports that this constraint will allow in the
+                `traffic.sidecar.istio.io/excludeInboundPorts` annotation.
+              items:
+                type: string
+              type: array
+            allowedOutboundIPRangeExclusions:
+              description: A list of IP ranges that this constraint will allow in
+                the `traffic.sidecar.istio.io/excludeOutboundIPRanges` annotation.
+                The constraint calculates whether excluded IP ranges match or are
+                a subset of the ranges in this list.
+              items:
+                type: string
+              type: array
+            allowedOutboundPortExclusions:
+              description: A list of ports that this constraint will allow in the
+                `traffic.sidecar.istio.io/excludeOutboundPorts` annotation.
+              items:
+                type: string
+              type: array
+          type: object
+  targets:
+  - rego: |
+      package asm.guardrails.networkexclusions
+
+      import future.keywords.in
+
+      resource := input.review.object
+
+      annotations := resource.metadata.annotations
+
+      kind := input.review.kind.kind
+
+      ################
+      # Inbound ports
+      ################
+
+      # The includeInboundPorts annotation can be used to include specific ports - all
+      # other ports are then excluded - this constaint will be violated if used in
+      # this way.
+
+      all_inbound_ports_included {
+        not annotations["traffic.sidecar.istio.io/includeInboundPorts"]
+      }
+
+      all_inbound_ports_included {
+        "*" in split_str_set(annotations["traffic.sidecar.istio.io/includeInboundPorts"])
+      }
+
+      violation[{"msg": msg}] {
+        not all_inbound_ports_included
+        msg := sprintf("%v includes specific inbound ports. If setting 'traffic.sidecar.istio.io/includeInboundPorts' it may only be set to '*'. Use 'traffic.sidecar.istio.io/excludeInboundPorts' to set specific port exclusions", [resource.kind])
+      }
+
+      # 15020 is always allowed for health checks
+      violation[{"msg": msg, "details": {"deniedInboundPorts": forbiddenInboundPortExclusions}}] {
+        a := annotations["traffic.sidecar.istio.io/excludeInboundPorts"]
+        inboundPortExclusions = split_str_set(a)
+
+        # The sidecar injector always excludes 15020 for health checks
+        allowedInboundPortExclusions := {port | port := input.parameters.allowedInboundPortExclusions[_]} | {"15020"}
+        forbiddenInboundPortExclusions := inboundPortExclusions - allowedInboundPortExclusions
+        count(forbiddenInboundPortExclusions) > 0
+
+        msg := sprintf("%v has forbidden inbound port exclusions: %v", [kind, forbiddenInboundPortExclusions])
+      }
+
+      #################
+      # Outbound ports
+      #################
+
+      # The includeOutboundPorts annotation can be used to include specific ports -
+      # this constraint will be violated if used in this way. Note that the behaviour
+      # of outbound port inclusion is different from inbound but the constraint
+      # behaviour is the same for consistency and to be future proof.
+
+      all_outbound_ports_included {
+        not annotations["traffic.sidecar.istio.io/includeOutboundPorts"]
+      }
+
+      all_outbound_ports_included {
+        "*" in split_str_set(annotations["traffic.sidecar.istio.io/includeOutboundPorts"])
+      }
+
+      violation[{"msg": msg}] {
+        not all_outbound_ports_included
+        msg := sprintf("%v includes specific outbound ports. If setting 'traffic.sidecar.istio.io/includeOutboundPorts' it may only be set to '*'. Use 'traffic.sidecar.istio.io/excludeOutboundPorts' to set specific port exclusions", [kind])
+      }
+
+      violation[{"msg": msg, "details": {"deniedOutboundPorts": forbiddenOutboundPortExclusions}}] {
+        a := annotations["traffic.sidecar.istio.io/excludeOutboundPorts"]
+        outboundPortExclusions = split_str_set(a)
+        allowedOutboundPortExclusions := {port | port := input.parameters.allowedOutboundPortExclusions[_]}
+        forbiddenOutboundPortExclusions := outboundPortExclusions - allowedOutboundPortExclusions
+        count(forbiddenOutboundPortExclusions) > 0
+
+        msg := sprintf("%v has forbidden outbound port exclusions: %v", [kind, forbiddenOutboundPortExclusions])
+      }
+
+      #####################
+      # Outbound IP ranges
+      #####################
+
+      # The includeOutboundIPRanges annotation can be used to include specific IP
+      # ranges - all other IP ranges are then excluded - this constraint will be
+      # violated if used in this way.
+
+      all_outbound_ip_ranges_included {
+        not annotations["traffic.sidecar.istio.io/includeOutboundIPRanges"]
+      }
+
+      all_outbound_ip_ranges_included {
+        "*" in split_str_set(annotations["traffic.sidecar.istio.io/includeOutboundIPRanges"])
+      }
+
+      violation[{"msg": msg}] {
+        not all_outbound_ip_ranges_included
+        msg := sprintf("%v includes specific outbound IP ranges. If setting 'traffic.sidecar.istio.io/includeOutboundIPRanges' it may only be set to '*'. Use 'traffic.sidecar.istio.io/excludeOutboundIPRanges' to set specific IP range exclusions", [kind])
+      }
+
+      violation[{"msg": msg, "details": {"deniedOutboundIPRanges": forbiddenOutboundIPRangeExclusions}}] {
+        a := annotations["traffic.sidecar.istio.io/excludeOutboundIPRanges"]
+        outboundIPRangeExclusions = split_str_set(a)
+        allowedOutboundIPRangeExclusions := {cidr | cidr := input.parameters.allowedOutboundIPRangeExclusions[_]}
+        matches := net.cidr_contains_matches(allowedOutboundIPRangeExclusions, outboundIPRangeExclusions)
+        permittedMatches := {match | match := matches[_][1]}
+        forbiddenOutboundIPRangeExclusions = outboundIPRangeExclusions - permittedMatches
+        count(forbiddenOutboundIPRangeExclusions) > 0
+
+        msg := sprintf("%v has forbidden outbound IP range exclusions: %v", [kind, forbiddenOutboundIPRangeExclusions])
+      }
+
+      split_str_set(str) := {x |
+        some i
+        p := split(str, ",")
+        x := p[i]
+      }
+    target: admission.k8s.gatekeeper.sh

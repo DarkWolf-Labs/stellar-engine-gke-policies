@@ -1,0 +1,68 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  annotations:
+    description: Disallows resources from containing specified labels unless there
+      is an exception for the specific resource.
+    metadata.gatekeeper.sh/title: Restrict Labels
+    metadata.gatekeeper.sh/version: 1.0.2
+  labels:
+  name: k8srestrictlabels
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sRestrictLabels
+      validation:
+        legacySchema: false
+        openAPIV3Schema:
+          properties:
+            exceptions:
+              description: Objects listed here are exempt from enforcement of this
+                constraint. All fields must be provided.
+              items:
+                description: A single object's identification, based on group, kind,
+                  namespace, and name.
+                properties:
+                  group:
+                    description: The Kubernetes group of the exempt object.
+                    type: string
+                  kind:
+                    description: The Kubernetes kind of the exempt object.
+                    type: string
+                  name:
+                    description: The name of the exempt object.
+                    type: string
+                  namespace:
+                    description: The namespace of the exempt object. For cluster-scoped
+                      resources, use the empty string `""`.
+                    type: string
+                type: object
+              type: array
+            restrictedLabels:
+              description: A list of label keys strings.
+              items:
+                type: string
+              type: array
+          type: object
+  targets:
+  - rego: |
+      package k8srestrictlabels
+
+      violation[{"msg": msg}] {
+        some label
+        input.review.object.metadata.labels[label]
+        restrictedLabel := input.parameters.restrictedLabels[_]
+        label == restrictedLabel
+        not is_exception(input.parameters, input.review)
+        msg := sprintf("<%v> label is restricted", [label])
+      }
+
+      is_exception(parameters, review) {
+        exception := parameters.exceptions[_]
+        review.kind.group == exception.group
+        review.kind.kind == exception.kind
+        review.object.metadata.namespace == exception.namespace
+        review.object.metadata.name == exception.name
+      }
+    target: admission.k8s.gatekeeper.sh

@@ -1,0 +1,60 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  annotations:
+    description: Requires either Pod Security Admission or an external policy control
+      system
+    metadata.gatekeeper.sh/requires-sync-data: |
+      "[
+        [
+          {
+            "groups": ["admissionregistration.k8s.io"],
+            "versions": ["v1", "v1beta1"],
+            "kinds": ["ValidatingWebhookConfiguration"]
+          }
+        ]
+      ]"
+    metadata.gatekeeper.sh/title: Require Admission Controller
+    metadata.gatekeeper.sh/version: 1.0.0
+  labels:
+    policycontroller.configmanagement.gke.io/referential: "true"
+  name: k8srequireadmissioncontroller
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sRequireAdmissionController
+      validation:
+        legacySchema: false
+        openAPIV3Schema:
+          properties:
+            permittedValidatingWebhooks:
+              description: List of permitted validating webhooks which are valid external
+                policy control systems
+              items:
+                type: string
+              type: array
+          type: object
+  targets:
+  - rego: |
+      package k8srequireadmissioncontroller
+
+      violation[{"msg": msg}] {
+        input.review.kind.kind == "Namespace"
+        permittedValidatingWebhooks := object.get(input, ["parameters", "permittedValidatingWebhooks"], {})
+
+        # Check neither the default admission control or a permitted Validating Webhook is present
+        not has_permitted_admission_controller(input.review.object, permittedValidatingWebhooks)
+
+        msg := sprintf("Namespace <%v> has neither the Pod Security Admission, nor is a permitted <%v> external admission controller present", [input.review.object.metadata.name, permittedValidatingWebhooks])
+      }
+
+      has_permitted_admission_controller(obj, _) {
+        providedLabels := {label | obj.metadata.labels[label]}
+        startswith(providedLabels[_], "pod-security.kubernetes.io/")
+      }
+
+      has_permitted_admission_controller(_, permittedValidatingWebhooks) {
+        permittedValidatingWebhooks[_] == data.inventory.cluster["admissionregistration.k8s.io/v1"].ValidatingWebhookConfiguration[_].metadata.name
+      }
+    target: admission.k8s.gatekeeper.sh

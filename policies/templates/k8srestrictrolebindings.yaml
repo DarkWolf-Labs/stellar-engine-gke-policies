@@ -1,0 +1,121 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  annotations:
+    description: Restricts the subjects specified in ClusterRoleBindings and RoleBindings
+      to a list of allowed subjects.
+    metadata.gatekeeper.sh/title: Restrict Role Bindings
+    metadata.gatekeeper.sh/version: 1.0.3
+  labels:
+  name: k8srestrictrolebindings
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sRestrictRoleBindings
+      validation:
+        legacySchema: false
+        openAPIV3Schema:
+          properties:
+            allowedSubjects:
+              description: The list of subjects that are allowed to bind to the restricted
+                role.
+              items:
+                properties:
+                  apiGroup:
+                    description: The Kubernetes API group of the subject.
+                    type: string
+                  kind:
+                    description: The Kubernetes kind of the subject.
+                    type: string
+                  name:
+                    description: The name of the subject which is matched exactly
+                      as provided as well as based on a regular expression.
+                    type: string
+                  regexMatch:
+                    description: The flag to allow a regular expression based match
+                      on the name.
+                    type: boolean
+                type: object
+              type: array
+            restrictedRole:
+              description: The role that cannot be bound to unless expressly allowed.
+              properties:
+                apiGroup:
+                  description: The Kubernetes API group of the role.
+                  type: string
+                kind:
+                  description: The Kubernetes kind of the role.
+                  type: string
+                name:
+                  description: The name of the role.
+                  type: string
+              type: object
+          type: object
+  targets:
+  - rego: |
+      package k8srestrictrolebindings
+
+      violation[{"msg": msg}] {
+        is_rolebinding_or_cluster_rolebinding(input.review.kind)
+        input.review.object.roleRef.apiGroup == input.parameters.restrictedRole.apiGroup
+        input.review.object.roleRef.kind == input.parameters.restrictedRole.kind
+        input.review.object.roleRef.name == input.parameters.restrictedRole.name
+        has_not_allowed_subject(input.review.object.subjects, input.parameters)
+        msg := sprintf("%v is restricted from referencing %v %v", [input.review.kind.kind, input.parameters.restrictedRole.kind, input.parameters.restrictedRole.name])
+      }
+
+      is_rolebinding_or_cluster_rolebinding(kind) {
+        kind.group == "rbac.authorization.k8s.io"
+        kinds := {"RoleBinding", "ClusterRoleBinding"}
+        kinds[kind.kind]
+      }
+
+      has_not_allowed_subject(subjects, parameters) {
+        subject := subjects[_]
+        not subject_is_allowed(subject, parameters.allowedSubjects)
+      }
+
+      subject_is_allowed(subject, allowedSubjects) {
+        allowedSubject := allowedSubjects[_]
+        has_exact_or_regex_match(allowedSubject, subject.name)
+        subject.kind == allowedSubject.kind
+        api_group_is_equal(subject, allowedSubject)
+      }
+
+      has_exact_or_regex_match(allowedSubject, subject_name) {
+        not should_exactly_match(allowedSubject)
+        regex.match(allowedSubject.name, subject_name)
+      }
+
+      has_exact_or_regex_match(allowedSubject, subject_name) {
+        should_exactly_match(allowedSubject)
+        allowedSubject.name == subject_name
+      }
+
+      should_exactly_match(allowedSubject) {
+        not allowedSubject.regexMatch
+      }
+
+      should_exactly_match(allowedSubject) {
+        allowedSubject.regexMatch == false
+      }
+
+      # Check apiGroup value and return true if they are empty string or undefined
+      api_group_is_equal(subject, allowedSubject) {
+        has_empty_or_undefined_api_group(subject)
+        has_empty_or_undefined_api_group(allowedSubject)
+      }
+
+      api_group_is_equal(subject, allowedSubject) {
+        subject.apiGroup == allowedSubject.apiGroup
+      }
+
+      has_empty_or_undefined_api_group(subject) {
+        not subject.apiGroup
+      }
+
+      has_empty_or_undefined_api_group(subject) {
+        subject.apiGroup == ""
+      }
+    target: admission.k8s.gatekeeper.sh

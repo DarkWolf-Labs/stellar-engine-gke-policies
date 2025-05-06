@@ -1,0 +1,38 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  annotations:
+    description: Enforces Cloud Armor configuration on BackendConfig resources
+    metadata.gatekeeper.sh/title: Enforce Cloud Armor on BackendConfig Resources
+    metadata.gatekeeper.sh/version: 1.0.2
+  labels:
+  name: k8senforcecloudarmorbackendconfig
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sEnforceCloudArmorBackendConfig
+      validation:
+        legacySchema: false
+  targets:
+  - rego: |
+      package k8senforcecloudarmorbackendconfig
+
+      violation[{"msg": msg}] {
+        input.review.kind.kind == "BackendConfig"
+        is_null(input.review.object.spec.securityPolicy.name)
+        msg := "Cloudarmor is not configured on the BackendConfig resource"
+      }
+
+      violation[{"msg": msg}] {
+        input.review.kind.kind == "BackendConfig"
+        input.review.object.spec.securityPolicy.name == ""
+        msg := "Cloudarmor is not configured on the BackendConfig resource"
+      }
+
+      violation[{"msg": msg}] {
+        input.review.kind.kind == "BackendConfig"
+        not input.review.object.spec.securityPolicy.name
+        msg := "Cloudarmor is not configured on the BackendConfig resource"
+      }
+    target: admission.k8s.gatekeeper.sh

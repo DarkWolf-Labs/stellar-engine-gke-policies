@@ -1,0 +1,56 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  annotations:
+    description: Disallows the creation of Ingress objects (`Ingress`, `Gateway`,
+      and `Service` types of `NodePort` and `LoadBalancer`).
+    metadata.gatekeeper.sh/title: Block all Ingress
+    metadata.gatekeeper.sh/version: 1.0.4
+  labels:
+  name: k8sblockallingress
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sBlockAllIngress
+      validation:
+        legacySchema: false
+        openAPIV3Schema:
+          properties:
+            allowList:
+              description: A list of regular expressions for the Ingress object names
+                that are exempt from the constraint.
+              items:
+                type: string
+              type: array
+          type: object
+  targets:
+  - rego: |
+      package k8sblockallingress
+
+      import future.keywords.in
+
+      violation[{"msg": msg}] {
+        ingress_object(input)
+        not in_list(input.parameters.allowList, input.review.object.metadata.name)
+        msg := sprintf("<%v> ingress object is invalid and is not present in the constraint allowList.", [input.review.object.metadata.name])
+      }
+
+      in_list(list, elem) {
+        allowedRegex := list[_]
+        regex.match(allowedRegex, elem)
+      }
+
+      ingress_object(val) {
+        val.review.kind.kind == "Service"
+        val.review.object.spec.type in {"NodePort", "LoadBalancer"}
+      }
+
+      ingress_object(val) {
+        val.review.kind.kind == "Gateway"
+      }
+
+      ingress_object(val) {
+        val.review.kind.kind == "Ingress"
+      }
+    target: admission.k8s.gatekeeper.sh

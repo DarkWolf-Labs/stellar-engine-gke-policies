@@ -1,0 +1,83 @@
+apiVersion: templates.gatekeeper.sh/v1beta1
+kind: ConstraintTemplate
+metadata:
+  annotations:
+    description: Requires that every namespace defined in the cluster has a NetworkPolicy.
+    metadata.gatekeeper.sh/requires-sync-data: |
+      "[
+        [
+          {
+            "groups": ["extensions"],
+            "versions": ["v1beta1"],
+            "kinds": ["NetworkPolicy"]
+          },
+          {
+            "groups": ["networking.k8s.io"],
+            "versions": ["v1"],
+            "kinds": ["NetworkPolicy"]
+          }
+        ]
+      ]"
+    metadata.gatekeeper.sh/title: Require Namespace Network Policies
+    metadata.gatekeeper.sh/version: 1.0.6
+  labels:
+    policycontroller.configmanagement.gke.io/referential: "true"
+  name: sek8srequirenamespacenetworkpolicies
+spec:
+  crd:
+    spec:
+      names:
+        kind: SEK8sRequireNamespaceNetworkPolicies
+      validation:
+        legacySchema: false
+  targets:
+  - rego: |
+      package k8srequirenamespacenetworkpolicies
+
+      violation[{"msg": msg}] {
+        # Iterate over all Namespaces found in the inventory cache
+        ns_obj := data.inventory.cluster["v1"]["Namespace"][namespace_name]
+      
+        # Optional: Exclude system namespaces (adjust as needed)
+        not is_system_namespace(ns_obj.metadata.name)
+      
+        # Check if the current namespace lacks any NetworkPolicy objects
+        not namespace_has_networkpolicy(ns_obj.metadata.name)
+      
+        # If no policy found, create a violation message
+        msg := sprintf("Namespace <%v> must have at least one NetworkPolicy defined", [ns_obj.metadata.name])
+      }
+      
+      # Helper function to check if any NetworkPolicy exists for the given namespace 'ns'
+      namespace_has_networkpolicy(ns) {
+        # Use the CORRECT path to check for NetworkPolicies in the inventory
+        # Check if the count of NetworkPolicies in namespace 'ns' is greater than 0
+        count(data.inventory.cluster["networking.k8s.io/v1"]["NetworkPolicy"][ns]) > 0
+      }
+      # Older API group check (optional, but good for thoroughness if needed)
+      # namespace_has_networkpolicy(ns) {
+      #   count(data.inventory.cluster["extensions/v1beta1"]["NetworkPolicy"][ns]) > 0
+      # }
+      
+      # Helper function to identify system namespaces to exclude (customize this list)
+      is_system_namespace(ns) {
+        startswith(ns, "kube-")
+      }
+      is_system_namespace(ns) {
+        startswith(ns, "gatekeeper-")
+      }
+      is_system_namespace(ns) {
+        ns == "config-management-system"
+      }
+      is_system_namespace(ns) {
+        # Add any other namespaces you want to exclude (e.g., "istio-system")
+        ns == "gke-managed-system"
+      }
+      is_system_namespace(ns) {
+        ns == "gke-managed-system"
+      }
+      is_system_namespace(ns) {
+        ns == "gke-managed-volumepopulator"
+      }
+      # Add other system namespaces as needed
+    target: admission.k8s.gatekeeper.sh

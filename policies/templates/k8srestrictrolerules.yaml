@@ -1,0 +1,250 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  annotations:
+    description: Restricts rules that can be set on Role and ClusterRole objects.
+    metadata.gatekeeper.sh/title: Restrict Role and ClusterRole rules.
+    metadata.gatekeeper.sh/version: 1.0.4
+  labels:
+  name: k8srestrictrolerules
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sRestrictRoleRules
+      validation:
+        legacySchema: false
+        openAPIV3Schema:
+          properties:
+            allowedRules:
+              description: AllowedRules is the list of rules that are allowed on Role
+                or ClusterRole objects. If set, any item off this list will be rejected.
+              items:
+                properties:
+                  apiGroups:
+                    description: |
+                      APIGroups is the name of the APIGroup that contains the resources. If multiple API groups are specified, any action requested against one of the enumerated resources in any API group will be allowed. "" represents the core API group and "*" represents all API groups.
+                    items:
+                      type: string
+                    type: array
+                  resources:
+                    description: |
+                      Resources is a list of resources this rule applies to. '*' represents all resources.
+                    items:
+                      type: string
+                    type: array
+                  verbs:
+                    description: |
+                      Verbs is a list of Verbs that apply to ALL the ResourceKinds contained in this rule. '*' represents all verbs.
+                    items:
+                      type: string
+                    type: array
+                required:
+                - apiGroups
+                - resources
+                - verbs
+                type: object
+              type: array
+            disallowedRules:
+              description: DisallowedRules is the list of rules that are NOT allowed
+                on Role or ClusterRole objects. If set, any item on this list will
+                be rejected.
+              items:
+                properties:
+                  apiGroups:
+                    description: |
+                      APIGroups is the name of the APIGroup that contains the resources. If multiple API groups are specified, any action requested against one of the enumerated resources in any API group will be disallowed. "" represents the core API group and "*" represents all API groups.
+                    items:
+                      type: string
+                    type: array
+                  resources:
+                    description: |
+                      Resources is a list of resources this rule applies to. '*' represents all resources.
+                    items:
+                      type: string
+                    type: array
+                  verbs:
+                    description: |
+                      Verbs is a list of Verbs that apply to ALL the ResourceKinds contained in this rule. '*' represents all verbs.
+                    items:
+                      type: string
+                    type: array
+                required:
+                - apiGroups
+                - resources
+                - verbs
+                type: object
+              type: array
+            exemptions:
+              description: Exemptions is the list of Roles and/or ClusterRoles names
+                that are allowed to violate this policy.
+              properties:
+                clusterRoles:
+                  items:
+                    properties:
+                      name:
+                        description: Name is the name or a pattern of the ClusterRole
+                          to be exempted.
+                        type: string
+                      regexMatch:
+                        description: RegexMatch is the flag to toggle exact vs regex
+                          match of the ClusterRole name.
+                        type: boolean
+                    required:
+                    - name
+                    type: object
+                  type: array
+                roles:
+                  items:
+                    properties:
+                      name:
+                        description: Name is the name of the Role to be exempted.
+                        type: string
+                      namespace:
+                        description: Namespace is the namespace of the Role to be
+                          exempted.
+                        type: string
+                    required:
+                    - name
+                    - namespace
+                    type: object
+                  type: array
+              type: object
+          type: object
+  targets:
+  - rego: |
+      package k8srestrictrolerules
+
+      import future.keywords.in
+
+      # allowed rules validation
+      violation[{"msg": msg}] {
+        count(input.parameters.allowedRules) > 0
+        is_role_or_clusterrole(input.review.object)
+        count(input.review.object.rules) > 0
+        not is_exemped(input.review.object)
+
+        satisfied := [disallowed |
+          rule := input.review.object.rules[_]
+          not allowed_rules_match(rule)
+          disallowed := rule
+        ]
+
+        count(satisfied) > 0
+
+        msg := sprintf("%v <%v> has a rule of <%v> that's not on allowedRules list", [input.review.object.kind, fmt_name(input.review.object), satisfied[_]])
+      }
+
+      allowed_rules_match(rule) {
+        satisfied := [good |
+          item := input.parameters.allowedRules[_]
+          superset_contains_all(rule.apiGroups, item.apiGroups)
+          superset_contains_all(rule.resources, item.resources)
+          superset_contains_all(rule.verbs, item.verbs)
+          good := item
+        ]
+
+        count(satisfied) > 0
+      }
+
+      # disallowed rules validation
+      violation[{"msg": msg}] {
+        count(input.parameters.disallowedRules) > 0
+        is_role_or_clusterrole(input.review.object)
+        count(input.review.object.rules) > 0
+        not is_exemped(input.review.object)
+
+        satisfied := [disallowed |
+          rule := input.review.object.rules[_]
+          disallowed_rules_match(rule)
+          disallowed := rule
+        ]
+
+        count(satisfied) > 0
+
+        msg := sprintf("%v <%v> has a rule of <%v> that's on disallowedRules list", [input.review.object.kind, fmt_name(input.review.object), satisfied[_]])
+      }
+
+      disallowed_rules_match(rule) {
+        satisfied := [good |
+          item := input.parameters.disallowedRules[_]
+          superset_contains_any(rule.apiGroups, item.apiGroups)
+          superset_contains_any(rule.resources, item.resources)
+          superset_contains_any(rule.verbs, item.verbs)
+          good := item
+        ]
+
+        count(satisfied) > 0
+      }
+
+      is_role_or_clusterrole(obj) {
+        obj.apiVersion == "rbac.authorization.k8s.io/v1"
+        obj.kind == "Role"
+      }
+
+      is_role_or_clusterrole(obj) {
+        obj.apiVersion == "rbac.authorization.k8s.io/v1"
+        obj.kind == "ClusterRole"
+      }
+
+      fmt_name(obj) := output {
+        obj.kind == "ClusterRole"
+        output := obj.metadata.name
+      }
+
+      fmt_name(obj) := output {
+        obj.kind == "Role"
+        output := sprintf("%v/%v", [obj.metadata.namespace, obj.metadata.name])
+      }
+
+      superset_contains_all(_, superset) {
+        "*" in superset
+      }
+
+      superset_contains_all(subset, superset) {
+        some i, j
+        found := [f | superset[i] == subset[j]; f := subset[j]]
+        count(found) == count(subset)
+      }
+
+      superset_contains_any(_, superset) {
+        "*" in superset
+      }
+
+      superset_contains_any(subset, _) {
+        "*" in subset
+      }
+
+      superset_contains_any(subset, superset) {
+        some i, j
+        found := [f | superset[i] == subset[j]; f := subset[j]]
+        count(found) > 0
+      }
+
+      # check for cluster role exemption
+      is_exemped(obj) {
+        obj.kind == "ClusterRole"
+        count(input.parameters.exemptions.clusterRoles) > 0
+        exemption := input.parameters.exemptions.clusterRoles[_]
+        has_exact_or_regex_match(exemption, obj.metadata)
+      }
+
+      # check for role exemption
+      is_exemped(obj) {
+        obj.kind == "Role"
+        count(input.parameters.exemptions.roles) > 0
+        exemption := input.parameters.exemptions.roles[_]
+        exemption.name == obj.metadata.name
+        exemption.namespace = obj.metadata.namespace
+      }
+
+      has_exact_or_regex_match(exemption, metadata) {
+        exemption.regexMatch == true
+        regex.match(exemption.name, metadata.name)
+      }
+
+      has_exact_or_regex_match(exemption, metadata) {
+        not exemption.regexMatch == true
+        exemption.name == metadata.name
+      }
+    target: admission.k8s.gatekeeper.sh

@@ -1,0 +1,59 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  annotations:
+    description: Enforces which CIDR blocks are allowed for network ingress and egress.
+    metadata.gatekeeper.sh/title: Require Valid Ranges for Networks
+    metadata.gatekeeper.sh/version: 1.0.2
+  labels:
+  name: k8srequirevalidrangesfornetworks
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sRequireValidRangesForNetworks
+      validation:
+        legacySchema: false
+        openAPIV3Schema:
+          properties:
+            allowedEgress:
+              description: IP ranges in CIDR format (0.0.0.0/32) that are allowed
+                for egress.
+              items:
+                type: string
+              type: array
+            allowedIngress:
+              description: IP ranges in CIDR format (0.0.0.0/32) that are allowed
+                for ingress.
+              items:
+                type: string
+              type: array
+          type: object
+  targets:
+  - rego: |
+      package k8srequirevalidrangesfornetworks
+
+      violation[{"msg": msg, "details": {"deniedIngressIPRanges": forbiddenIngressCidr}}] {
+        input.review.kind.kind == "NetworkPolicy"
+        ingress_cidr := {cidr | cidr = input.review.object.spec.ingress[_].from[_].ipBlock.cidr}
+        allowedIngress := {cidr | cidr := input.parameters.allowedIngress[_]}
+        matches := net.cidr_contains_matches(allowedIngress, ingress_cidr)
+        permittedMatches := {match | match := matches[_][1]}
+        forbiddenIngressCidr = ingress_cidr - permittedMatches
+        count(forbiddenIngressCidr) > 0
+
+        msg := sprintf("%v has ingress IP outside the valid ingress range: %v", [input.review.kind.kind, forbiddenIngressCidr])
+      }
+
+      violation[{"msg": msg, "details": {"deniedEgressIPRanges": forbiddenEgressCidr}}] {
+        input.review.kind.kind == "NetworkPolicy"
+        egress_cidr := {cidr | cidr = input.review.object.spec.egress[_].from[_].ipBlock.cidr}
+        allowedEgress := {cidr | cidr := input.parameters.allowedEgress[_]}
+        matches := net.cidr_contains_matches(allowedEgress, egress_cidr)
+        permittedMatches := {match | match := matches[_][1]}
+        forbiddenEgressCidr = egress_cidr - permittedMatches
+        count(forbiddenEgressCidr) > 0
+
+        msg := sprintf("%v has egress IP outside the valid egress range: %v", [input.review.kind.kind, forbiddenEgressCidr])
+      }
+    target: admission.k8s.gatekeeper.sh

@@ -1,0 +1,70 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  annotations:
+    description: |-
+      Requires that principals and namespaces in Istio `AuthorizationPolicy` rules not have a prefix from a specified list.
+      https://istio.io/latest/docs/reference/config/security/authorization-policy/
+    metadata.gatekeeper.sh/title: ASM AuthorizationPolicy Disallowed Prefixes
+    metadata.gatekeeper.sh/version: 1.0.2
+    policycontroller.configmanagement.gke.io/version: 1.20.2
+  labels:
+  name: asmauthzpolicydisallowedprefix
+spec:
+  crd:
+    spec:
+      names:
+        kind: AsmAuthzPolicyDisallowedPrefix
+      validation:
+        legacySchema: false
+        openAPIV3Schema:
+          properties:
+            disallowedNamespacePrefixes:
+              description: Disallowed prefixes for namespaces.
+              items:
+                type: string
+              type: array
+            disallowedPrincipalPrefixes:
+              description: Disallowed prefixes for principals.
+              items:
+                type: string
+              type: array
+          type: object
+  targets:
+  - rego: |
+      package asm.security.authorizationpolicy
+
+      spec := input.review.object.spec
+
+      is_authzpolicy(kind) {
+        kind.kind == "AuthorizationPolicy"
+        kind.group == "security.istio.io"
+      }
+
+      ################
+      # From Source Principals
+      ################
+
+      violation[{"msg": msg}] {
+        is_authzpolicy(input.review.kind)
+        principal := spec.rules[_].from[_].source.principals[_]
+        parts := split(principal, "/")
+        badprefix := input.parameters.disallowedPrincipalPrefixes[_]
+
+        # check the final component of source.principals, the service account name
+        startswith(parts[count(parts) - 1], badprefix)
+        msg := sprintf("source.principals '%v' cannot begin with '%v'", [principal, badprefix])
+      }
+
+      ################
+      # From Source Namespaces
+      ################
+
+      violation[{"msg": msg}] {
+        is_authzpolicy(input.review.kind)
+        namespace := spec.rules[_].from[_].source.namespaces[_]
+        badprefix := input.parameters.disallowedNamespacePrefixes[_]
+        startswith(namespace, badprefix)
+        msg := sprintf("source.namespaces '%v' cannot begin with '%v'", [namespace, badprefix])
+      }
+    target: admission.k8s.gatekeeper.sh

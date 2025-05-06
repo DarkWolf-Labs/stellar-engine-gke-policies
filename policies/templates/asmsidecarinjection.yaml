@@ -1,0 +1,57 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  annotations:
+    description: Enforce the istio proxy sidecar always been injected to workload
+      pods.
+    metadata.gatekeeper.sh/title: ASM Sidecar Injection
+    metadata.gatekeeper.sh/version: 1.0.2
+  labels:
+  name: asmsidecarinjection
+spec:
+  crd:
+    spec:
+      names:
+        kind: AsmSidecarInjection
+      validation:
+        legacySchema: false
+        openAPIV3Schema:
+          properties:
+            strictnessLevel:
+              description: Level of sidecar injection strictness.
+              enum:
+              - Low
+              - High
+              type: string
+          type: object
+  targets:
+  - rego: |
+      package asm.security.workloadpolicy
+
+      resource := input.review.object
+
+      spec := resource.spec
+
+      ################
+      # Sidecar injection annotation
+      ################
+
+      # Annotation `sidecar.istio.io/inject: false` should not be applied on workload pods which will bypass istio proxy.
+
+      forbidden_injection_annotation := {"key": "sidecar.istio.io/inject", "value": "false"}
+
+      violation[{"msg": msg}] {
+        has_strictness_set_to_high
+        is_pod(input.review.kind)
+        contains(resource.metadata.annotations[forbidden_injection_annotation.key], forbidden_injection_annotation.value)
+        msg := sprintf("The annotation %v: %v should not be applied on workload pods", [forbidden_injection_annotation.key, forbidden_injection_annotation.value])
+      }
+
+      has_strictness_set_to_high {
+        input.parameters.strictnessLevel == "High"
+      }
+
+      is_pod(kind) {
+        kind.kind == "Pod"
+      }
+    target: admission.k8s.gatekeeper.sh

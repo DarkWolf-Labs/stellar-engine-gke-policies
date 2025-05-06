@@ -1,0 +1,47 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  annotations:
+    description: Requires that every namespace defined in the cluster has a NetworkPolicy.
+    metadata.gatekeeper.sh/requires-sync-data: |
+      "[
+        [
+          {
+            "groups": ["extensions"],
+            "versions": ["v1beta1"],
+            "kinds": ["NetworkPolicy"]
+          },
+          {
+            "groups": ["networking.k8s.io"],
+            "versions": ["v1"],
+            "kinds": ["NetworkPolicy"]
+          }
+        ]
+      ]"
+    metadata.gatekeeper.sh/title: Require Namespace Network Policies
+    metadata.gatekeeper.sh/version: 1.0.6
+  labels:
+    policycontroller.configmanagement.gke.io/referential: "true"
+  name: k8srequirenamespacenetworkpolicies
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sRequireNamespaceNetworkPolicies
+      validation:
+        legacySchema: false
+  targets:
+  - rego: |
+      package k8srequirenamespacenetworkpolicies
+
+      violation[{"msg": msg}] {
+        input.review.kind.kind == "Namespace"
+        input.review.operation != "CREATE"
+        not namespace_has_networkpolicy(input.review.object.metadata.name, data.inventory)
+        msg := sprintf("Namespace <%v> does not have a NetworkPolicy", [input.review.object.metadata.name])
+      }
+
+      namespace_has_networkpolicy(ns, inventory) {
+        inventory.namespace[ns][_].NetworkPolicy[_]
+      }
+    target: admission.k8s.gatekeeper.sh

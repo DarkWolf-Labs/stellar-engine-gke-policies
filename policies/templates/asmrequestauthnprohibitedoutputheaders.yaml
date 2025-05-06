@@ -1,0 +1,72 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  annotations:
+    description: In RequestAuthentication, enforce the `jwtRules.outPayloadToHeader`
+      field to not contain well known HTTP request headers or custom prohibited headers.
+      Reference to https://istio.io/latest/docs/reference/config/security/jwt/#JWTRule.
+    metadata.gatekeeper.sh/title: ASM RequestAuthentication Prohibited Output Headers
+    metadata.gatekeeper.sh/version: 1.0.2
+  labels:
+  name: asmrequestauthnprohibitedoutputheaders
+spec:
+  crd:
+    spec:
+      names:
+        kind: AsmRequestAuthnProhibitedOutputHeaders
+      validation:
+        legacySchema: false
+        openAPIV3Schema:
+          properties:
+            prohibitedHeaders:
+              description: User predefined prohibited headers.
+              items:
+                type: string
+              type: array
+          type: object
+  targets:
+  - rego: |
+      package asm.security.requestauthentication
+
+      resource := input.review.object
+
+      spec := resource.spec
+
+      controls_headers := {"Cache-Control", "Expect", "Host", "Max-Forwards", "Pragma", "Range", "TE"}
+
+      conditional_headers := {"If-Match", "If-None-Match", "If-Modified-Since", "If-Unmodified-Since", "If-Range"}
+
+      content_negotiation_headers := {"Accept", "Accept-Charset", "Accept-Encoding", "Accept-Language"}
+
+      authentication_credentials_headers := {"Authorization", "Proxy-Authorization"}
+
+      request_context_headers := {"From", "Referer", "User-Agent"}
+
+      well_known_headers := (((controls_headers | conditional_headers) | content_negotiation_headers) | authentication_credentials_headers) | request_context_headers
+
+      ################
+      # jwtRules outputPayloadToHeader
+      ################
+
+      # outputPayloadToHeader must not contain well known headers
+      violation[{"msg": msg}] {
+        is_requestauthn(input.review.kind)
+        header := spec.jwtRules[_].outputPayloadToHeader
+        well_known_headers[header]
+        msg := sprintf("RequestAuthentication jwtRules outputPayloadToHeader contains well known header: %v", [header])
+      }
+
+      # outputPalyloadToHeader must not contain predefined prohibited headers
+      violation[{"msg": msg}] {
+        is_requestauthn(input.review.kind)
+        input_prohibited_headers := {x | x = input.parameters.prohibitedHeaders[_]}
+        header := spec.jwtRules[_].outputPayloadToHeader
+        input_prohibited_headers[header]
+        msg := sprintf("RequestAuthentication jwtRules outputPayloadToHeader contains predefined prohibited header: %v", [header])
+      }
+
+      is_requestauthn(kind) {
+        kind.kind == "RequestAuthentication"
+        kind.group == "security.istio.io"
+      }
+    target: admission.k8s.gatekeeper.sh

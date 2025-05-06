@@ -1,0 +1,195 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  annotations:
+    description: Enforce the AuthorizationPolicy safe patterns. Reference to https://istio.io/latest/docs/ops/best-practices/security/#safer-authorization-policy-patterns.
+    metadata.gatekeeper.sh/title: ASM AuthorizationPolicy Safe Patterns
+    metadata.gatekeeper.sh/version: 1.0.4
+  labels:
+  name: asmauthzpolicysafepattern
+spec:
+  crd:
+    spec:
+      names:
+        kind: AsmAuthzPolicySafePattern
+      validation:
+        legacySchema: false
+        openAPIV3Schema:
+          properties:
+            strictnessLevel:
+              description: Level of AuthorizationPolicy strictness.
+              enum:
+              - Low
+              - High
+              type: string
+          type: object
+  targets:
+  - rego: |
+      package asm.security.authorizationpolicy
+
+      spec := input.review.object.spec
+
+      is_authzpolicy(kind) {
+        kind.kind == "AuthorizationPolicy"
+        kind.group == "security.istio.io"
+      }
+
+      has_strictness_set_to_high {
+        input.parameters.strictnessLevel == "High"
+      }
+
+      ################
+      # To Operation Hosts
+      ################
+
+      # hosts and notHosts field should only be used in ingress gateways rather than sidecar proxies.
+      # Current logic is check whether the label "istio" or "asm" contains keyword "ingressgateway".
+      # This is valid when following two conditions are true.
+      # 1. ASM installation instruction will not let user modify ingressgateway label, label istio or
+      #    asm still contains keyword ingressgateway.
+      # 2. Combined with IngressgatewayLabel constraint which enforce "istio: ingressgateway" or
+      #    "asm: ingressgateway" label can only be applied on actual ingress gateway pod.
+      # Current ASM ingressgateway labels: "app: istio-ingressgateway, istio: ingressgateway", or
+      # "app: asm-ingressgateway, asm: ingressgateway"
+
+      violation[{"msg": msg}] {
+        is_authzpolicy(input.review.kind)
+
+        # check if there are hosts or notHosts fields
+        has_hosts_or_notHosts_fields
+
+        # check if the selector not contains a key istio with ingressgateway keyword
+        not has_ingressgateway_label
+        msg := "in rules-to-operation, hosts or notHosts should only be used in ingress gateway"
+      }
+
+      has_hosts_or_notHosts_fields {
+        spec.rules[_].to[_].operation.hosts
+      }
+
+      has_hosts_or_notHosts_fields {
+        spec.rules[_].to[_].operation.notHosts
+      }
+
+      has_ingressgateway_label {
+        # check if there is a label value contains ingressgateway keyword
+        contains(spec.selector.matchLabels.istio, "ingressgateway")
+      }
+
+      has_ingressgateway_label {
+        # check if there is a label value contains ingressgateway keyword
+        contains(spec.selector.matchLabels.asm, "ingressgateway")
+      }
+
+      # hosts and notHosts field should contain <host-name> and <host-name>:* value pairs
+      violation[{"msg": msg}] {
+        has_strictness_set_to_high
+        is_authzpolicy(input.review.kind)
+
+        # check if there are invalid hosts or notHosts fields
+        contains_invalid_hosts_or_notHosts_values
+        msg := "in rules-to-operation, hosts or notHosts should contain <host-name> and <host-name>:* value pairs"
+      }
+
+      contains_invalid_hosts_or_notHosts_values {
+        hosts := spec.rules[_].to[_].operation.hosts
+        not valid_hosts(hosts)
+      }
+
+      contains_invalid_hosts_or_notHosts_values {
+        not_hosts := spec.rules[_].to[_].operation.notHosts
+        not valid_hosts(not_hosts)
+      }
+
+      valid_hosts(hosts) {
+        some i
+        hostnames := {hostname | not contains(hosts[i], ":"); hostname := hosts[i]}
+        hostname_ports := {hostname_port | endswith(hosts[i], ":*"); hostname_port := hosts[i]}
+
+        # trim the port from hostname_ports
+        trimed_hostname_ports := {hp | hostname_ports[i]; hp := trim_suffix(hostname_ports[i], ":*")}
+
+        # check hostname and hostname:* with same number
+        count(hostnames) == count(hostname_ports)
+
+        # check there are no extra host
+        count(hosts) == count(hostnames) + count(hostname_ports)
+
+        # check hostname are the matched ones for hostname:*
+        count(hostnames - trimed_hostname_ports) == 0
+      }
+
+      ################
+      # Authorization Policy Patterns
+      ################
+
+      # For safer security, AuthorizaionPolicy should use ALLOW-with-positive-matching
+      # or DENY-with-negative-match. This is enabled if the strictnessLevel is H (high).
+      # Ref: https://istio.io/latest/docs/ops/best-practices/security/#use-allow-with-positive-matching-and-deny-with-negative-match-patterns
+
+      # ALLOW-with-positive-matching
+      violation[{"msg": msg}] {
+        has_strictness_set_to_high
+        is_authzpolicy(input.review.kind)
+
+        # check if action is ALLOW
+        spec.action == "ALLOW"
+
+        # check if rules contains negative matching
+        has_negative_matching(spec.rules)
+        msg := "ALLOW action should only use positive matching, e.g. hosts, ports, methods, paths, values"
+      }
+
+      has_negative_matching(rules) {
+        rules[_].to[_].operation.notHosts
+      }
+
+      has_negative_matching(rules) {
+        rules[_].to[_].operation.notPorts
+      }
+
+      has_negative_matching(rules) {
+        rules[_].to[_].operation.notMethods
+      }
+
+      has_negative_matching(rules) {
+        rules[_].to[_].operation.notPaths
+      }
+
+      has_negative_matching(rules) {
+        rules[_].when[_].notValues
+      }
+
+      # DENY-with-negative-match
+      violation[{"msg": msg}] {
+        has_strictness_set_to_high
+        is_authzpolicy(input.review.kind)
+
+        # check if action is ALLOW
+        spec.action == "DENY"
+
+        # check if rules contains positive matching
+        has_positive_matching(spec.rules)
+        msg := "DENY action should only use negative matching, e.g. notHosts, notPorts, notMethods, notPaths, notValues"
+      }
+
+      has_positive_matching(rules) {
+        rules[_].to[_].operation.hosts
+      }
+
+      has_positive_matching(rules) {
+        rules[_].to[_].operation.ports
+      }
+
+      has_positive_matching(rules) {
+        rules[_].to[_].operation.methods
+      }
+
+      has_positive_matching(rules) {
+        rules[_].to[_].operation.paths
+      }
+
+      has_positive_matching(rules) {
+        rules[_].when[_].values
+      }
+    target: admission.k8s.gatekeeper.sh

@@ -1,0 +1,95 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  annotations:
+    description: Requires the list of daemonsets specified to be present.
+    metadata.gatekeeper.sh/requires-sync-data: |
+      "[
+        [
+          {
+            "groups": ["extensions"],
+            "versions": ["v1beta1"],
+            "kinds": ["DaemonSet"]
+          },
+          {
+            "groups": ["apps"],
+            "versions": ["v1beta2", "v1"],
+            "kinds": ["DaemonSet"]
+          }
+        ]
+      ]"
+    metadata.gatekeeper.sh/title: Required Daemonsets
+    metadata.gatekeeper.sh/version: 1.1.2
+  labels:
+    policycontroller.configmanagement.gke.io/referential: "true"
+  name: k8srequiredaemonsets
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sRequireDaemonsets
+      validation:
+        legacySchema: false
+        openAPIV3Schema:
+          properties:
+            requiredDaemonsets:
+              description: A list of names and namespaces of the required daemonsets.
+              items:
+                properties:
+                  name:
+                    description: The name of the required daemonset.
+                    type: string
+                  namespace:
+                    description: The namespace for the required daemonset.
+                    type: string
+                type: object
+              type: array
+            restrictNodeSelector:
+              default: false
+              description: The daemonsets cannot include `NodeSelector`.
+              type: boolean
+          type: object
+  targets:
+  - rego: |
+      package k8srequiredaemonsets
+
+      violation[{"msg": msg}] {
+        input.review.kind.kind == "Namespace"
+        daemonsets := object.get(input.parameters, "requiredDaemonsets", [])
+        required := daemonsets[_]
+        input.review.object.metadata.name == required.namespace
+        not found_daemonset(required, data.inventory)
+        msg := sprintf("Namespace <%v> does not have a required daemonset <%v>", [required.namespace, required.name])
+      }
+
+      found_daemonset(required, inventory) {
+        object.get(input, ["parameters", "restrictNodeSelector"], null) != true
+        inventory.namespace[required.namespace][_].DaemonSet[required.name]
+      }
+
+      found_daemonset(required, inventory) {
+        object.get(input, ["parameters", "restrictNodeSelector"], null) == true
+        inventory.namespace[required.namespace][_].DaemonSet[required.name]
+        not found_nodeselector(required, inventory)
+      }
+
+      found_nodeselector(required, inventory) {
+        inventory.namespace[required.namespace][_].DaemonSet[required.name].spec.template.spec.nodeSelector
+      }
+
+      # Raise a violation if the namespace of the required daemonset doesn't exist
+      violation[{"msg": msg}] {
+        input.review.kind.kind == "Namespace"
+        daemonsets := object.get(input.parameters, "requiredDaemonsets", [])
+
+        # We use the default namespace for violation uniqueness as it can't be deleted
+        input.review.object.metadata.name == "default"
+        required := daemonsets[_]
+        not found_namespace(required.namespace, data.inventory)
+        msg := sprintf("Namespace <%v> for required daemonset <%v> does not exist", [required.namespace, required.name])
+      }
+
+      found_namespace(namespace, inventory) {
+        inventory.namespace[namespace]
+      }
+    target: admission.k8s.gatekeeper.sh

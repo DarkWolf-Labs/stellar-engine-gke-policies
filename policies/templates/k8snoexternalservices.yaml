@@ -1,0 +1,98 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  annotations:
+    description: |-
+      Prohibits the creation of known resources that expose workloads to external IPs. This includes Istio Gateway resources and Kubernetes Ingress resources. Kubernetes services are also disallowed unless they meet the following criteria:
+      Any Service of type `LoadBalancer` in Google Cloud must have a `"networking.gke.io/load-balancer-type": "Internal"` annotation.
+      Any Service of type `LoadBalancer` in AWS must have a `service.beta.kubernetes.io/aws-load-balancer-internal: "true` annotation.
+      Any "external IPs" (external to the cluster) bound to the Service must be a member of a range of internal CIDRs as provided to the constraint.
+    metadata.gatekeeper.sh/title: No External Services
+    metadata.gatekeeper.sh/version: 1.0.3
+  labels:
+  name: k8snoexternalservices
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sNoExternalServices
+      validation:
+        legacySchema: false
+        openAPIV3Schema:
+          properties:
+            cloudPlatform:
+              description: The hosting cloud platform. Only `GCP` and `AWS` are supported
+                currently.
+              type: string
+            internalCIDRs:
+              description: 'A list of CIDRs that are only accessible internally, for
+                example: `10.3.27.0/24`. Which IP ranges are internal-only is determined
+                by the underlying network infrastructure.'
+              items:
+                type: string
+              type: array
+          type: object
+  targets:
+  - rego: |
+      package k8snoexternalservices
+
+      import future.keywords.in
+
+      violation[{"msg": msg}] {
+        input.review.kind.kind == "Ingress"
+        regex.match(`^(extensions|networking.k8s.io)$`, input.review.kind.group)
+        msg := "No external service exposure is allowed via ingress"
+      }
+
+      violation[{"msg": msg}] {
+        input.review.kind.kind == "Gateway"
+        input.review.kind.group == "networking.istio.io"
+        msg := "Creation of networking.istio.io/Gateway resources is not allowed"
+      }
+
+      violation[{"msg": msg}] {
+        input.review.kind.kind == "Service"
+        input.review.kind.group == ""
+        input.review.object.spec.type == "LoadBalancer"
+        not is_valid_service
+        msg := "Creating services of type `LoadBalancer` without Internal annotation or not setting `service.beta.kubernetes.io/aws-load-balancer-internal` to true is not allowed"
+      }
+
+      violation[{"msg": msg}] {
+        input.review.kind.kind == "Service"
+        input.review.kind.group == ""
+        ip := input.review.object.spec.externalIPs[_]
+        is_external_ip(ip)
+        msg := sprintf("Service has an external IP exposed: `%v`", [ip])
+      }
+
+      is_external_ip(ip) {
+        cidr_membership := [i | cidr := input.parameters.internalCIDRs[_]; i := net.cidr_contains(cidr, ip)]
+        not true in cidr_membership
+      }
+
+      is_valid_service {
+        # GKE versions < 1.17
+        input.review.object.metadata.annotations["cloud.google.com/load-balancer-type"] == "Internal"
+        is_hosted_on_gcp
+      }
+
+      is_valid_service {
+        # GKE versions >= 1.17
+        input.review.object.metadata.annotations["networking.gke.io/load-balancer-type"] == "Internal"
+        is_hosted_on_gcp
+      }
+
+      is_valid_service {
+        input.review.object.metadata.annotations["service.beta.kubernetes.io/aws-load-balancer-internal"] == "true"
+        input.parameters.cloudPlatform == "AWS"
+      }
+
+      is_hosted_on_gcp {
+        not input.parameters.cloudPlatform
+      }
+
+      is_hosted_on_gcp {
+        input.parameters.cloudPlatform == "GCP"
+      }
+    target: admission.k8s.gatekeeper.sh

@@ -1,0 +1,109 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  annotations:
+    description: |-
+      Requires that Roles and ClusterRoles not set resource access to a wildcard '"*"' value
+      except for the exempted Roles and ClusterRoles provided as exemptions.
+      Does not restrict wildcard access to subresources, such as '"*/status"'.
+    metadata.gatekeeper.sh/title: Prohibit Role Wildcard Access
+    metadata.gatekeeper.sh/version: 1.0.5
+  labels:
+  name: k8sprohibitrolewildcardaccess
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sProhibitRoleWildcardAccess
+      validation:
+        legacySchema: false
+        openAPIV3Schema:
+          properties:
+            exemptions:
+              description: The list of exempted Roles and/or ClusterRoles name that
+                are allowed to set  resource access to a wildcard.
+              properties:
+                clusterRoles:
+                  items:
+                    properties:
+                      name:
+                        description: The name of the ClusterRole to be exempted.
+                        type: string
+                      regexMatch:
+                        description: The flag to allow a regular expression based
+                          match on the name.
+                        type: boolean
+                    type: object
+                  type: array
+                roles:
+                  items:
+                    properties:
+                      name:
+                        description: The name of the Role to be exempted.
+                        type: string
+                      namespace:
+                        description: The namespace of the Role to be exempted.
+                        type: string
+                    type: object
+                  type: array
+              type: object
+          type: object
+  targets:
+  - rego: |
+      package k8sprohibitrolewildcardaccess
+
+      import future.keywords.in
+
+      violation[{"msg": msg}] {
+        some field
+        i := input
+        has_not_exempted_cluster_roles(input.review.kind, input.review.object.metadata, i)
+        has_not_exempted_roles(input.review.kind, input.review.object.metadata, i)
+        rule := input.review.object.rules[_]
+        "*" in rule[field]
+        msg := sprintf("<%v> has rule <%v> wildcard match", [input.review.object.metadata.name, field])
+      }
+
+      has_not_exempted_cluster_roles(_, _, i) {
+        not i.parameters.exemptions.clusterRoles
+      }
+
+      has_not_exempted_cluster_roles(kind, cluster_role_metadata, i) {
+        not cluster_role_is_exempted(kind, cluster_role_metadata, i.parameters.exemptions.clusterRoles)
+      }
+
+      cluster_role_is_exempted(kind, cluster_role_metadata, exempted_cluster_roles) {
+        count(exempted_cluster_roles) > 0
+        kind.kind == "ClusterRole"
+        kind.group == "rbac.authorization.k8s.io"
+        cluster_role := exempted_cluster_roles[_]
+        has_exact_or_regex_match(cluster_role, cluster_role_metadata)
+      }
+
+      has_exact_or_regex_match(exemptedCluster_role, subjectCluster_role) {
+        exemptedCluster_role.regexMatch == true
+        regex.match(exemptedCluster_role.name, subjectCluster_role.name)
+      }
+
+      has_exact_or_regex_match(exemptedCluster_role, subjectCluster_role) {
+        not exemptedCluster_role.regexMatch == true
+        exemptedCluster_role.name == subjectCluster_role.name
+      }
+
+      has_not_exempted_roles(_, _, i) {
+        not i.parameters.exemptions.roles
+      }
+
+      has_not_exempted_roles(kind, role_metadata, i) {
+        not role_is_exempted(kind, role_metadata, i.parameters.exemptions.roles)
+      }
+
+      role_is_exempted(kind, role_metadata, exempted_roles) {
+        count(exempted_roles) > 0
+        kind.kind == "Role"
+        kind.group == "rbac.authorization.k8s.io"
+        role := exempted_roles[_]
+        role.name == role_metadata.name
+        role.namespace == role_metadata.namespace
+      }
+    target: admission.k8s.gatekeeper.sh

@@ -1,0 +1,72 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  annotations:
+    description: Requires Pods and Pod Templates with `nodeSelector` or `nodeAfffinty`
+      of `gke-spot` to have a `terminationGracePeriodSeconds` of 15s or less.
+    metadata.gatekeeper.sh/requires-sync-data: |
+      "[
+        [
+          {
+            "groups": [""],
+            "versions": ["v1"],
+            "kinds": ["Node"]
+          }
+        ]
+      ]"
+    metadata.gatekeeper.sh/title: Restricts terminationGracePeriodSeconds for GKE
+      Spot VMs
+    metadata.gatekeeper.sh/version: 1.1.3
+  labels:
+    policycontroller.configmanagement.gke.io/referential: "true"
+  name: gkespotvmterminationgrace
+spec:
+  crd:
+    spec:
+      names:
+        kind: GkeSpotVMTerminationGrace
+      validation:
+        legacySchema: false
+        openAPIV3Schema:
+          properties:
+            includePodOnSpotNodes:
+              default: false
+              description: Require `terminationGracePeriodSeconds` of 15s or less
+                for all `Pod` on a `gke-spot` Node.
+              type: boolean
+          type: object
+  targets:
+  - rego: |
+      package gkespotvmterminationgrace
+
+      spot_key := "cloud.google.com/gke-spot"
+
+      violation[{"msg": msg}] {
+        has_selector_or_affinity(input.review.object.spec, spot_key)
+        termGrace := object.get(input.review.object.spec, "terminationGracePeriodSeconds", null)
+        not is_number_less_equal_15(termGrace)
+        msg := sprintf("%v with gke-spot nodeSelector or nodeAffinity must have terminationGracePeriodSeconds <= 15s, found: %v", [input.review.kind.kind, termGrace])
+      }
+
+      violation[{"msg": msg}] {
+        some node
+        input.parameters.includePodOnSpotNodes == true
+        data.inventory.cluster.v1.Node[node].metadata.labels[spot_key] == "true"
+        termGrace := object.get(input.review.object.spec, "terminationGracePeriodSeconds", null)
+        not is_number_less_equal_15(termGrace)
+        msg := sprintf("%v on gke-spot Node <%v> must have terminationGracePeriodSeconds <= 15s, found: %v", [input.review.kind.kind, input.review.object.spec.Nodename, termGrace])
+      }
+
+      has_selector_or_affinity(review, spot_key) {
+        review.nodeSelector[spot_key] == "true"
+      }
+
+      has_selector_or_affinity(review, spot_key) {
+        review.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[_].matchExpressions[_].key == spot_key
+      }
+
+      is_number_less_equal_15(value) {
+        is_number(value)
+        value <= 15
+      }
+    target: admission.k8s.gatekeeper.sh

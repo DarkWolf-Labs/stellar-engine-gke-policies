@@ -1,0 +1,153 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  annotations:
+    description: Promotes Pod stability by requiring that all containers' requested
+      memory exactly equals the memory limit, so that Pods are never in a state where
+      memory usage exceeds the requested amount. Otherwise, Kubernetes can terminate
+      Pods requesting extra memory if memory is needed on the node.
+    metadata.gatekeeper.sh/title: Memory Request Equals Limit
+    metadata.gatekeeper.sh/version: 1.0.4
+  labels:
+  name: k8smemoryrequestequalslimit
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sMemoryRequestEqualsLimit
+      validation:
+        legacySchema: false
+        openAPIV3Schema:
+          properties:
+            exemptContainersRegex:
+              description: Exempt Container names as regex match.
+              items:
+                type: string
+              type: array
+          type: object
+  targets:
+  - rego: |
+      package k8smemoryrequestequalslimit
+
+      missing_or_empty(obj, field) {
+        not obj[field]
+      }
+
+      missing_or_empty(obj, field) {
+        obj[field] == ""
+      }
+
+      missing_or_empty(obj, field) {
+        obj[field] == {}
+      }
+
+      violation[{"msg": msg}] {
+        input.review.kind.group == ""
+        input.review.kind.kind == "Pod"
+        field_violation[{"field": "containers", "msg": msg}]
+      }
+
+      violation[{"msg": msg}] {
+        input.review.kind.group == ""
+        input.review.kind.kind == "Pod"
+        field_violation[{"field": "initContainers", "msg": msg}]
+      }
+
+      field_violation[{"msg": msg, "field": field}] {
+        some field
+        container := input.review.object.spec[field][_]
+        missing_or_empty(container.resources.requests, "memory")
+        not is_exempt_container(container.name)
+        msg := sprintf("container <%v> must have a memory request", [container.name])
+      }
+
+      field_violation[{"msg": msg, "field": field}] {
+        some field
+        container := input.review.object.spec[field][_]
+        missing_or_empty(container, "resources")
+        not is_exempt_container(container.name)
+        msg := sprintf("container <%v> has no resources", [container.name])
+      }
+
+      field_violation[{"msg": msg, "field": field}] {
+        some field
+        container := input.review.object.spec[field][_]
+        missing_or_empty(container.resources, "limits")
+        not is_exempt_container(container.name)
+        msg := sprintf("container <%v> has no resource limits", [container.name])
+      }
+
+      field_violation[{"msg": msg, "field": field}] {
+        some field
+        container := input.review.object.spec[field][_]
+        missing_or_empty(container.resources, "requests")
+        not is_exempt_container(container.name)
+        msg := sprintf("container <%v> has no resource requests", [container.name])
+      }
+
+      field_violation[{"msg": msg, "field": field}] {
+        some field
+        container := input.review.object.spec[field][_]
+        missing_or_empty(container.resources.limits, "memory")
+        not is_exempt_container(container.name)
+        msg := sprintf("container <%v> has no memory limit", [container.name])
+      }
+
+      field_violation[{"msg": msg, "field": field}] {
+        some field
+        container := input.review.object.spec[field][_]
+        mem_lim := canonify_bytes(container.resources.limits.memory)
+        mem_req := canonify_bytes(container.resources.requests.memory)
+        mem_req != mem_lim
+        not is_exempt_container(container.name)
+        msg := sprintf("Container <%v> memory request <%v> must exactly equal limit <%v>", [container.name, container.resources.requests.memory, container.resources.limits.memory])
+      }
+
+      field_violation[{"msg": msg, "field": field}] {
+        some field
+        container := input.review.object.spec[field][_]
+        not is_number_or_e_notation(container.resources.limits.memory)
+        not is_number_with_suffix(container.resources.limits.memory)
+        not is_exempt_container(container.name)
+        msg := sprintf("Container <%v> memory limit <%v> could not be parsed as bytes", [container.name, container.resources.limits.memory])
+      }
+
+      field_violation[{"msg": msg, "field": field}] {
+        some field
+        container := input.review.object.spec[field][_]
+        not is_number_or_e_notation(container.resources.requests.memory)
+        not is_number_with_suffix(container.resources.requests.memory)
+        not is_exempt_container(container.name)
+        msg := sprintf("Container <%v> memory request <%v> could not be parsed as bytes", [container.name, container.resources.requests.memory])
+      }
+
+      is_number_or_e_notation(n) {
+        regex.match(`^[0-9]*(\.?[0-9]+)?(e[-+]?[0-9]+)?$`, sprintf("%v", [n]))
+      }
+
+      is_number_with_suffix(n) {
+        regex.match(`^[0-9]+(\.[0-9]+)?[EePpTtGgMmKk]i?$`, sprintf("%v", [n]))
+      }
+
+      canonify_bytes(n) := n_bytes {
+        is_number_or_e_notation(n)
+        n_bytes := to_number(n)
+      }
+
+      canonify_bytes(n) := n_bytes {
+        is_number_with_suffix(n)
+        n_bytes := units.parse_bytes(sprintf("%vB", [n]))
+      }
+
+      is_exempt_container(name) {
+        parameters := object.get(input, "parameters", {})
+        exemptContainers := object.get(parameters, "exemptContainersRegex", [])
+        count(exemptContainers) > 0
+        exemptContainer := exemptContainers[_]
+        has_regex_match(name, exemptContainer)
+      }
+
+      has_regex_match(subject, exempt) {
+        regex.match(exempt, subject)
+      }
+    target: admission.k8s.gatekeeper.sh

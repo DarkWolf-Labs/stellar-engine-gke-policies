@@ -1,0 +1,67 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  annotations:
+    description: |-
+      Requires that principals and namespaces in Istio `AuthorizationPolicy` rules not have a prefix from a specified list.
+      https://istio.io/latest/docs/reference/config/security/authorization-policy/
+    metadata.gatekeeper.sh/title: Disallow Istio AuthorizationPolicy Prefixes
+    metadata.gatekeeper.sh/version: 1.0.2
+  labels:
+  name: disallowedauthzprefix
+spec:
+  crd:
+    spec:
+      names:
+        kind: DisallowedAuthzPrefix
+      validation:
+        legacySchema: false
+        openAPIV3Schema:
+          properties:
+            disallowedprefixes:
+              description: Disallowed prefixes of principals and namespaces.
+              items:
+                type: string
+              type: array
+          type: object
+  targets:
+  - rego: |
+      package asm.guardrails.disallowedauthzprefix
+
+      violation[{"msg": msg}] {
+        p := input.review.object
+
+        startswith(p.apiVersion, "security.istio.io/")
+        p.kind == "AuthorizationPolicy"
+
+        rule := p.spec.rules[_]
+        from := rule.from[_]
+
+        principal := from.source.principals[_]
+        parts := split(principal, "/")
+
+        badprefix := input.parameters.disallowedprefixes[_]
+
+        # check the final component of source.principals, the service account name
+        startswith(parts[count(parts) - 1], badprefix)
+
+        msg := sprintf("source.principals '%v' cannot begin with '%v'", [principal, badprefix])
+      }
+
+      violation[{"msg": msg}] {
+        p := input.review.object
+
+        startswith(p.apiVersion, "security.istio.io/")
+        p.kind == "AuthorizationPolicy"
+
+        rule := p.spec.rules[_]
+        from := rule.from[_]
+
+        namespace := from.source.namespaces[_]
+
+        badprefix := input.parameters.disallowedprefixes[_]
+        startswith(namespace, badprefix)
+
+        msg := sprintf("source.namespaces '%v' cannot begin with '%v'", [namespace, badprefix])
+      }
+    target: admission.k8s.gatekeeper.sh

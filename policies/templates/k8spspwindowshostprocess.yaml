@@ -1,0 +1,55 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  annotations:
+    description: Restricts running of Windows HostProcess containers / pods. See https://kubernetes.io/docs/tasks/configure-pod-container/create-hostprocess-pod/
+      for more information.
+    metadata.gatekeeper.sh/title: Restricts Windows HostProcess containers / pods.
+    metadata.gatekeeper.sh/version: 1.0.0
+  labels:
+  name: k8spspwindowshostprocess
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sPSPWindowsHostProcess
+      validation:
+        legacySchema: false
+  targets:
+  - rego: |
+      package k8spspwindowshostprocess
+
+      violation[{"msg": msg}] {
+        c := input_containers[_]
+        is_hostprocess(c)
+        msg := sprintf("Windows HostProcess container is not allowed: %v", [c.name])
+      }
+
+      # returns true if hostProcess is set to true for container
+      is_hostprocess(c) {
+        c.securityContext.windowsOptions.hostProcess == true
+      }
+
+      # returns true if hostProcess is not specified for container AND is set to true on pod
+      is_hostprocess(c) {
+        not sets_hostprocess(c)
+        input.review.object.spec.securityContext.windowsOptions.hostProcess == true
+      }
+
+      # returns true if hostProcess is set for container
+      sets_hostprocess(c) {
+        c.securityContext.windowsOptions.hostProcess != null
+      }
+
+      input_containers[c] {
+        c := input.review.object.spec.containers[_]
+      }
+
+      input_containers[c] {
+        c := input.review.object.spec.initContainers[_]
+      }
+
+      input_containers[c] {
+        c := input.review.object.spec.ephemeralContainers[_]
+      }
+    target: admission.k8s.gatekeeper.sh

@@ -1,0 +1,57 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  annotations:
+    description: Enforce the istio ingressgateway label usage only on ingressgateway
+      pods.
+    metadata.gatekeeper.sh/title: ASM Ingress Gateway Label
+    metadata.gatekeeper.sh/version: 1.0.3
+  labels:
+  name: asmingressgatewaylabel
+spec:
+  crd:
+    spec:
+      names:
+        kind: AsmIngressgatewayLabel
+      validation:
+        legacySchema: false
+  targets:
+  - rego: |
+      package asm.security.workloadpolicy
+
+      resource := input.review.object
+
+      spec := resource.spec
+
+      ################
+      # Ingressgateway label
+      ################
+
+      # Label `istio: ingressgateway` should only be used on istio ingressgateway pod,
+      # which container image starts with `gcr.io/gke-release/asm/proxyv2:`.
+
+      ingress_labels := [{"key": "istio", "value": "ingressgateway"}, {"key": "asm", "value": "ingressgateway"}]
+
+      ingress_image_prefix := "gcr.io/gke-release/asm/proxyv2:"
+
+      violation[{"msg": msg}] {
+        is_pod(input.review.kind)
+        contains_ingress_label
+        not is_pod_istio_ingressgateway
+        msg := "The label `istio:ingressgateway` and `asm:ingressgateway` can only be used on asm ingressgateway pods."
+      }
+
+      contains_ingress_label {
+        some i
+        contains(resource.metadata.labels[ingress_labels[i].key], ingress_labels[i].value)
+      }
+
+      is_pod_istio_ingressgateway {
+        count(spec.containers) == 1
+        startswith(spec.containers[_].image, ingress_image_prefix)
+      }
+
+      is_pod(kind) {
+        kind.kind == "Pod"
+      }
+    target: admission.k8s.gatekeeper.sh

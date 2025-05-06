@@ -1,0 +1,49 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: gmp-system-restrict
+  namespace: gmp-system
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from: []
+    ports: []
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: gmp-public
+  - from:
+    - podSelector: {}
+  egress:
+  - to: []
+    ports: []
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+    ports:
+    - protocol: TCP
+      port: 443
+  - to:
+    - podSelector: {}
+  - to:
+    - ipBlock:
+        cidr: 35.190.244.0/20 # Broader range to include exceptions
+        except:
+        - 35.190.247.0/32
+        - 35.190.250.0/31
+        - 35.190.252.0/30
+  - to:
+    - ipBlock:
+        cidr: 35.201.152.0/20 # Broader range to include exceptions
+        except:
+        - 35.201.153.0/32
+        - 35.201.156.0/31
+        - 35.201.158.0/30

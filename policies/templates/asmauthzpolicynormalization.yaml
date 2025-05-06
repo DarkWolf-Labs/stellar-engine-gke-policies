@@ -1,0 +1,110 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  annotations:
+    description: Enforce the AuthorizationPolicy normalization. Reference to https://istio.io/latest/docs/reference/config/security/normalization/.
+    metadata.gatekeeper.sh/title: ASM AuthorizationPolicy Normalization
+    metadata.gatekeeper.sh/version: 1.0.2
+  labels:
+  name: asmauthzpolicynormalization
+spec:
+  crd:
+    spec:
+      names:
+        kind: AsmAuthzPolicyNormalization
+      validation:
+        legacySchema: false
+  targets:
+  - rego: |
+      package asm.security.authorizationpolicy
+
+      spec := input.review.object.spec
+
+      is_authzpolicy(kind) {
+        kind.kind == "AuthorizationPolicy"
+        kind.group == "security.istio.io"
+      }
+
+      ################
+      # To Operation Method
+      ################
+
+      # Methods and notMethods should only contain uppercase letters.
+
+      violation[{"msg": msg}] {
+        is_authzpolicy(input.review.kind)
+        has_invalid_method_or_notMethods
+        msg := "in rules-to-operation, methods or notMethods must be uppercase"
+      }
+
+      has_invalid_method_or_notMethods {
+        has_lower_case_method(spec.rules[_].to[_].operation.methods)
+      }
+
+      has_invalid_method_or_notMethods {
+        has_lower_case_method(spec.rules[_].to[_].operation.notMethods)
+      }
+
+      has_lower_case_method(methods) {
+        has_lower_case_letter(methods[_])
+      }
+
+      # has_lower_case_letter checks whether a string has any lower case letters.
+      has_lower_case_letter(s) {
+        not s == upper(s)
+      }
+
+      ################
+      # When Request Header
+      ################
+
+      # request.headers[<header-name>] must not contain white space.
+
+      violation[{"msg": msg}] {
+        is_authzpolicy(input.review.kind)
+        has_white_space_in_request_header(spec.rules[_].when[_].key)
+        msg := "rules-when-request.header must not contain white spaces"
+      }
+
+      has_white_space_in_request_header(key) {
+        is_authzpolicy(input.review.kind)
+        startswith(key, "request.headers")
+        not regex.match(`^request\.headers\[\S+\]$`, key)
+      }
+
+      ################
+      # To Operation Paths
+      ################
+
+      # Paths should be always normalized, and suggest users to set mesh level normalization if not.
+
+      violation[{"msg": msg}] {
+        is_authzpolicy(input.review.kind)
+        has_unnormalized_path_or_notPath
+        msg := `in rule-to-operation, paths or notPaths contain at least one unnormalized value: [\, //, /./, /../], please set mesh config pathNormalization value for normalization and update path to normalized value.`
+      }
+
+      has_unnormalized_path_or_notPath {
+        has_unnormalized_path(spec.rules[_].to[_].operation.paths[_])
+      }
+
+      has_unnormalized_path_or_notPath {
+        has_unnormalized_path(spec.rules[_].to[_].operation.notPaths[_])
+      }
+
+      has_unnormalized_path(path) {
+        contains(path, `\`)
+      }
+
+      has_unnormalized_path(path) {
+        contains(path, `//`)
+      }
+
+      has_unnormalized_path(path) {
+        contains(path, `/./`)
+      }
+
+      has_unnormalized_path(path) {
+        contains(path, `/../`)
+      }
+    target: admission.k8s.gatekeeper.sh

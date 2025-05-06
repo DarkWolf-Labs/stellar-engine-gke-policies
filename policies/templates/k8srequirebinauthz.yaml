@@ -1,0 +1,46 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  annotations:
+    description: Requires the Binary Authorization Validating Admission Webhook. Constraints
+      using this `ConstraintTemplate` will be audit only regardless of `enforcementAction`
+      value.
+    metadata.gatekeeper.sh/requires-sync-data: |
+      "[
+        [
+          {
+            "groups": ["admissionregistration.k8s.io"],
+            "versions": ["v1", "v1beta1"],
+            "kinds": ["ValidatingWebhookConfiguration"]
+          }
+        ]
+      ]"
+    metadata.gatekeeper.sh/title: Requires Binary Authorization
+    metadata.gatekeeper.sh/version: 1.0.2
+  labels:
+    policycontroller.configmanagement.gke.io/referential: "true"
+  name: k8srequirebinauthz
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sRequireBinAuthZ
+      validation:
+        legacySchema: false
+  targets:
+  - rego: |
+      package k8srequirebinauthz
+
+      violation[{"msg": msg}] {
+        # Use the default namespace for violation uniqueness as it can't be deleted
+        input.review.kind.kind == "Namespace"
+        input.review.object.metadata.name == "default"
+
+        # Audit Only
+        input.review.operation != "UPDATE"
+        input.review.operation != "CREATE"
+
+        not data.inventory.cluster["admissionregistration.k8s.io/v1"].ValidatingWebhookConfiguration["binauthz-admission-controller"]
+        msg := "Cluster does not have the required BinAuthz Validating Admission Webhook"
+      }
+    target: admission.k8s.gatekeeper.sh

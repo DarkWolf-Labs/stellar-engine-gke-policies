@@ -1,0 +1,66 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  annotations:
+    description: 'Requires that `STRICT` Istio mutual TLS is always specified when
+      using [PeerAuthentication](https://istio.io/latest/docs/reference/config/security/peer_authentication/).
+      This constraint also ensures that the deprecated [Policy](https://istio.io/v1.4/docs/reference/config/security/istio.authentication.v1alpha1/#Policy)
+      and MeshPolicy resources enforce `STRICT` mutual TLS. See: https://istio.io/latest/docs/tasks/security/authentication/mtls-migration/#lock-down-mutual-tls-for-the-entire-mesh'
+    metadata.gatekeeper.sh/title: Require STRICT Istio mTLS Policy
+    metadata.gatekeeper.sh/version: 1.0.4
+  labels:
+  name: policystrictonly
+spec:
+  crd:
+    spec:
+      names:
+        kind: PolicyStrictOnly
+      validation:
+        legacySchema: false
+  targets:
+  - rego: |
+      package asm.guardrails.policystrictonly
+
+      import future.keywords.in
+
+      OLD_KINDS := ["Policy", "MeshPolicy"]
+
+      strict_mtls {
+        p := input.review.object
+        count(p.spec.peers) == 1
+        p.spec.peers[0].mtls.mode == "STRICT"
+      }
+
+      # VIOLATION peer authentication does not set mTLS correctly
+      violation[{"msg": msg}] {
+        p := input.review.object
+        startswith(p.apiVersion, "authentication.istio.io/")
+        p.kind in OLD_KINDS
+        not strict_mtls
+        msg := "spec.peers does not include STRICT mTLS settings"
+      }
+
+      # VIOLATION spec.mtls must be set to `STRICT`
+      violation[{"msg": msg}] {
+        p := input.review.object
+
+        startswith(p.apiVersion, "security.istio.io/")
+        p.kind == "PeerAuthentication"
+
+        not p.spec.mtls.mode == "STRICT"
+        msg := "spec.mtls.mode must be set to `STRICT`"
+      }
+
+      # VIOLATION no ports can override `STRICT` mTLS mode
+      violation[{"msg": msg}] {
+        some port
+        p := input.review.object
+
+        startswith(p.apiVersion, "security.istio.io/")
+        p.kind == "PeerAuthentication"
+
+        valid_modes := {"UNSET", "STRICT"}
+        count({p.spec.portLevelMtls[port].mode} - valid_modes) > 0
+        msg := sprintf("port <%v> has invalid mtls mode <%v>", [port, p.spec.portLevelMtls[port].mode])
+      }
+    target: admission.k8s.gatekeeper.sh

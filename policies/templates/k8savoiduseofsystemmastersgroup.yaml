@@ -1,0 +1,55 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  annotations:
+    description: Disallows the use of 'system:masters' group. Has no effect during
+      audit.
+    metadata.gatekeeper.sh/title: Disallow the use of 'system:masters' group
+    metadata.gatekeeper.sh/version: 1.0.0
+  labels:
+  name: k8savoiduseofsystemmastersgroup
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sAvoidUseOfSystemMastersGroup
+      validation:
+        legacySchema: false
+        openAPIV3Schema:
+          properties:
+            allowlistedUsernames:
+              description: allowlistedUsernames is the list of usernames that are
+                allowed to use system:masters group.
+              items:
+                type: string
+              type: array
+          type: object
+  targets:
+  - rego: |
+      package k8savoiduseofsystemmastersgroup
+
+      import future.keywords.in
+
+      violation[{"msg": msg}] {
+        user_is_assigned_to_system_masters_group
+        not user_is_allowed_to_use_system_masters_group
+        not is_break_glass_procedure
+        msg := "The use of 'system:masters' group is disallowed."
+      }
+
+      user_is_assigned_to_system_masters_group {
+        groups := object.get(input.review.userInfo, "groups", [])
+        "system:masters" in groups
+      }
+
+      user_is_allowed_to_use_system_masters_group {
+        username := object.get(input.review.userInfo, "username", "")
+        username in input.parameters.allowlistedUsernames
+      }
+
+      # In case of the lockout, the break glass procedure allows to delete current constraint
+      is_break_glass_procedure {
+        input.review.operation == "DELETE"
+        input.review.object.kind == "K8sAvoidUseOfSystemMastersGroup"
+      }
+    target: admission.k8s.gatekeeper.sh

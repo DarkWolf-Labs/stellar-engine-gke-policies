@@ -1,0 +1,61 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  annotations:
+    description: Restrict dynamic admission controllers to permitted ones
+    metadata.gatekeeper.sh/title: Restrict Admission Controller
+    metadata.gatekeeper.sh/version: 1.0.0
+  labels:
+  name: k8srestrictadmissioncontroller
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sRestrictAdmissionController
+      validation:
+        legacySchema: false
+        openAPIV3Schema:
+          properties:
+            permittedMutatingWebhooks:
+              description: List of permitted mutating webhooks (mutating admission
+                controllers)
+              items:
+                type: string
+              type: array
+            permittedValidatingWebhooks:
+              description: List of permitted validating webhooks (validating admission
+                controllers)
+              items:
+                type: string
+              type: array
+          type: object
+  targets:
+  - rego: |
+      package k8srestrictadmissioncontroller
+
+      import future.keywords.in
+
+      # Check mutating webhooks
+      violation[{"msg": msg}] {
+        input.review.kind.kind == "MutatingWebhookConfiguration"
+
+        permittedWebhooks := object.get(input, ["parameters", "permittedMutatingWebhooks"], {})
+        permittedWebhooksSet := {x | x = permittedWebhooks[_]}
+
+        not input.review.object.metadata.name in permittedWebhooksSet
+
+        msg := sprintf("Mutating webhook '<%v>' is not permitted. Permitted mutating webhooks: <%v>", [input.review.object.metadata.name, permittedWebhooksSet])
+      }
+
+      # Check validating webhooks
+      violation[{"msg": msg}] {
+        input.review.kind.kind == "ValidatingWebhookConfiguration"
+
+        permittedWebhooks := object.get(input, ["parameters", "permittedValidatingWebhooks"], {})
+        permittedWebhooksSet := {x | x = permittedWebhooks[_]}
+
+        not input.review.object.metadata.name in permittedWebhooksSet
+
+        msg := sprintf("Validating webhook '<%v>' is not permitted. Permitted validating webhooks: <%v>", [input.review.object.metadata.name, permittedWebhooksSet])
+      }
+    target: admission.k8s.gatekeeper.sh

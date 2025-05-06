@@ -1,0 +1,35 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  annotations:
+    description: Restricts resources from using namespaces listed under the restrictedNamespaces
+      parameter.
+    metadata.gatekeeper.sh/title: Restrict Namespaces
+    metadata.gatekeeper.sh/version: 1.0.1
+  labels:
+  name: k8srestrictnamespaces
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sRestrictNamespaces
+      validation:
+        legacySchema: false
+        openAPIV3Schema:
+          properties:
+            restrictedNamespaces:
+              description: A list of Namespaces to restrict.
+              items:
+                type: string
+              type: array
+          type: object
+  targets:
+  - rego: |
+      package k8srestrictnamespaces
+
+      violation[{"msg": msg}] {
+        restricted_ns := input.parameters.restrictedNamespaces[_]
+        input.review.object.metadata.namespace == restricted_ns
+        msg := sprintf("<%v> namespace is restricted", [restricted_ns])
+      }
+    target: admission.k8s.gatekeeper.sh

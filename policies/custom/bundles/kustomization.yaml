@@ -14,7 +14,6 @@ resources:
 - cis-k8s-v1.5.1
 - cis-k8s-v1.7.1
 #- cost-reliability-v2023
-- kustomization.yaml
 - mitre-v2024
 - nist-sp-800-190
 - nist-sp-800-53-r5

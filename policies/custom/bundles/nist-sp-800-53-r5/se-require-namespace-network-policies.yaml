@@ -7,7 +7,7 @@
 # cluster” is defined as “A Cluster (of any kind) registered to a fleet project
 # where the Anthos API is enabled”.
 apiVersion: constraints.gatekeeper.sh/v1beta1
-kind: K8sRequireNamespaceNetworkPolicies
+kind: SEK8sRequireNamespaceNetworkPolicies
 metadata:
   name: nist-sp-800-53-r5-require-namespace-network-policies
   labels:
@@ -32,32 +32,32 @@ spec:
   enforcementAction: dryrun
   match:
     excludedNamespaces:
-      - kube-system
-      - kube-node-lease
-      - kube-public
-      - gatekeeper-system
-      - config-management-system
-      - config-management-monitoring
-      - resource-group-system
-      - gke-connect
-      - istio-system
-      - asm-system
-      - capi-system
-      - vm-system
-      - gke-managed-metrics-server
-      - cert-manager
-      - anthos-creds
-      - capi-kubeadm-bootstrap-system
-      - gke-system
-      - anthos-identity-service
-      - gmp-system
-      - gmp-public
-      - gke-gmp-system
-      - gke-managed-filestorecsi
-      - apigee
-      - apigee-system
-      - gke-managed-system
-      - gke-managed-cim
+    - kube-system
+    - kube-node-lease
+    - kube-public
+    - gatekeeper-system
+    - config-management-system
+    - config-management-monitoring
+    - resource-group-system
+    - gke-connect
+    - istio-system
+    - asm-system
+    - capi-system
+    - vm-system
+    - gke-managed-metrics-server
+    - cert-manager
+    - anthos-creds
+    - capi-kubeadm-bootstrap-system
+    - gke-system
+    - anthos-identity-service
+    - gmp-system
+    - gmp-public
+    - gke-gmp-system
+    - gke-managed-filestorecsi
+    - apigee
+    - apigee-system
+    - gke-managed-system
+    - gke-managed-cim
     kinds:
       - apiGroups:
           - ""

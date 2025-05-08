@@ -20,7 +20,7 @@ resources:
 - privileged-containers.yaml
 - proc-mount-type.yaml
 - require-binauthz.yaml
-- require-namespace-networkpolicy.yaml
+#- require-namespace-networkpolicy.yaml - use the custom SE version
 - restrict-admission-controller.yaml
 - restrict-automountserviceaccounttoken.yaml
 - restrict-capabilities.yaml

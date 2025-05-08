@@ -23,7 +23,7 @@ resources:
 - require-gke-metadata-server-enabled.yaml
 - require-ingress.class-gce.yaml
 - require-managed-certificates.yaml
-- require-namespace-networkpolicy.yaml
+#- require-namespace-networkpolicy.yaml - use the custom SE version
 - require-seccomp-default.yaml
 - require-securitycontext.yaml
 - restrict-automountserviceaccounttoken.yaml

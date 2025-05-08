@@ -35,13 +35,13 @@ spec:
       package k8srequirenamespacenetworkpolicies
 
       violation[{"msg": msg}] {
-        # Iterate over all Namespaces found in the inventory cache
+        # Iterate over all Namespaces found
         ns_obj := data.inventory.cluster["v1"]["Namespace"][namespace_name]
       
-        # Optional: Exclude system namespaces (adjust as needed)
+        # Exclude system namespaces
         not is_system_namespace(ns_obj.metadata.name)
       
-        # Check if the current namespace lacks any NetworkPolicy objects
+        # Check current namespace for NetworkPolicy objects
         not namespace_has_networkpolicy(ns_obj.metadata.name)
       
         # If no policy found, create a violation message
@@ -54,30 +54,12 @@ spec:
         # Check if the count of NetworkPolicies in namespace 'ns' is greater than 0
         count(data.inventory.cluster["networking.k8s.io/v1"]["NetworkPolicy"][ns]) > 0
       }
-      # Older API group check (optional, but good for thoroughness if needed)
-      # namespace_has_networkpolicy(ns) {
-      #   count(data.inventory.cluster["extensions/v1beta1"]["NetworkPolicy"][ns]) > 0
-      # }
       
-      # Helper function to identify system namespaces to exclude (customize this list)
+      # Helper function to identify system namespaces to exclude (customize this list). Add other system namespaces as needed
       is_system_namespace(ns) {
         startswith(ns, "kube-")
       }
       is_system_namespace(ns) {
         startswith(ns, "gatekeeper-")
       }
-      is_system_namespace(ns) {
-        ns == "config-management-system"
-      }
-      is_system_namespace(ns) {
-        # Add any other namespaces you want to exclude (e.g., "istio-system")
-        ns == "gke-managed-system"
-      }
-      is_system_namespace(ns) {
-        ns == "gke-managed-system"
-      }
-      is_system_namespace(ns) {
-        ns == "gke-managed-volumepopulator"
-      }
-      # Add other system namespaces as needed
     target: admission.k8s.gatekeeper.sh

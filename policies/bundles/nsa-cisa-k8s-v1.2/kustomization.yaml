@@ -21,7 +21,7 @@ resources:
 - privilege-escalation.yaml
 - privileged-containers.yaml
 - readonlyrootfilesystem.yaml
-- require-namespace-network-policies.yaml
+#- require-namespace-network-policies.yaml - use the custom SE version
 - restrict-clusteradmin-rolebindings.yaml
 - restrict-edit-rolebindings.yaml
 - restrict-hostpath-volumes.yaml

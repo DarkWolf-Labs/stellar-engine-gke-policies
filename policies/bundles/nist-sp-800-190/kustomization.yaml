@@ -23,7 +23,7 @@ resources:
 - proc-mount-type.yaml
 - require-binauthz.yaml
 - require-managed-by-label.yaml
-- require-namespace-network-policies.yaml
+#- require-namespace-network-policies.yaml - use the custom SE version
 - restrict-clusteradmin-rolebindings.yaml
 - restrict-hostpath-volumes.yaml
 - restrict-rbac-subjects.yaml

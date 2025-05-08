@@ -1,0 +1,60 @@
+# Copyright 2024 Google LLC
+#
+# This is “Software” that is licensed under the “General Software” section of
+# the Service Specific Terms (https://cloud.google.com/terms/service-terms) for
+# usage in accordance with the following “Scope of Use”: This file may only be
+# used on an Anthos cluster, including any associated ci/cd use. “Anthos
+# cluster” is defined as “A Cluster (of any kind) registered to a fleet project
+# where the Anthos API is enabled”.
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sPSPSeccomp
+metadata:
+  name: pss-restricted-v2022-seccomp
+  labels:
+    policycontroller.gke.io/bundleName: pss-restricted-v2022
+  annotations:
+    policycontroller.gke.io/constraintData: |-
+      "{
+        bundleName: 'pss-restricted-v2022',
+        bundleDisplayName: 'Pod Security Standards Restricted v2022',
+        bundleLink: 'https://cloud.google.com/anthos-config-management/docs/how-to/using-pss-restricted',
+        bundleVersion: '202403.1',
+        bundleDescription: 'Use the Pod Security Standards Restricted v2022 policy bundle with Policy Controller to achieve many of the Kubernetes Pod Security Standards Restricted policy protections.',
+        controlNumbers: '[]',
+        severity: 'UNSPECIFIED',
+        description: 'Seccomp profile must be explicitly set to one of the allowed values. Both the Unconfined profile and the absence of a profile are prohibited.',
+        remediation: 'Containers cannot run with a `seccomp` profile other than `RuntimeDefault` or `Localhost`. Set your containers `seccomp` annotation to `RuntimeDefault` or `Localhost`. See \"Set the Seccomp Profile for a Container\" for more information: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-seccomp-profile-for-a-container',
+        minimumTemplateLibraryVersion: '1.11.1',
+        constraintHash: 'd9e621ce720bc2003c54b5f4cb76c67d92b85b914f1624d8145724346557658e'
+      }"
+    policycontroller.gke.io/bundleVersion: "202403.1"
+spec:
+  enforcementAction: dryrun
+  match:
+    kinds:
+    - apiGroups:
+      - ""
+      kinds:
+      - Pod
+    excludedNamespaces:
+    - kube-system
+    - gatekeeper-system
+    - config-management-monitoring
+    - config-management-system
+    - asm-system
+    - resource-group-system
+    - istio-system
+    - gke-connect
+    - gke-managed-metrics-server
+    - anthos-identity-service
+    - gke-system
+    - cert-manager
+    - apigee
+    - apigee-system
+  parameters:
+    allowedProfiles:
+    - RuntimeDefault
+    - Localhost
+    exemptImages:
+    - gcr.io/gke-release/asm/proxyv2:*
+    - gcr.io/anthos-baremetal-release/*

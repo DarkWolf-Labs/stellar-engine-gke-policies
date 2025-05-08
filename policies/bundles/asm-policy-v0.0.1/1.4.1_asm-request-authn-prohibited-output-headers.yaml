@@ -1,0 +1,45 @@
+# Copyright 2024 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: AsmRequestAuthnProhibitedOutputHeaders
+metadata:
+  name: asm-policy-v0.0.1-asm-request-authn-prohibited-output-headers
+  labels:
+    policycontroller.gke.io/bundleName: asm-policy-v0.0.1
+  annotations:
+    policycontroller.gke.io/constraintData: |-
+      "{
+        bundleName: 'asm-policy-v0.0.1',
+        bundleDisplayName: 'Anthos Service Mesh v0.0.1',
+        bundleLink: 'https://cloud.google.com/anthos-config-management/docs/how-to/using-asm-security-policy',
+        bundleVersion: '202311.0',
+        bundleDescription: 'Use the ASM Policy v0.0.1 policy bundle with Policy Controller to evaluate the compliance of your clusters running Anthos Service Mesh against service mesh security best practices.',
+        controlNumbers: '[1.4.1]',
+        severity: 'UNSPECIFIED',
+        description: 'In RequestAuthentication, enforce the jwtRules outputPayloadToHeader to not contain well known HTTP request headers or user predefined prohibited headers.',
+        remediation: 'Modify the corresponding RequestAuthentication to not use well known or predefined prohibited headers.',
+        minimumTemplateLibraryVersion: '1.11.1',
+        constraintHash: '85838e97e5e216c8f6e64a5c4fda75ebbdc005694c7f92a89e9977366c9175c5'
+      }"
+    policycontroller.gke.io/bundleVersion: "202311.0"
+spec:
+  enforcementAction: dryrun
+  match:
+    kinds:
+      - apiGroups:
+          - security.istio.io
+        kinds:
+          - RequestAuthentication
+  parameters:
+    prohibitedHeaders: []

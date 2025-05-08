@@ -1,0 +1,43 @@
+# Copyright 2024 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: AsmAuthzPolicyNormalization
+metadata:
+  name: asm-policy-v0.0.1-asm-authz-policy-normalization
+  labels:
+    policycontroller.gke.io/bundleName: asm-policy-v0.0.1
+  annotations:
+    policycontroller.gke.io/constraintData: |-
+      "{
+        bundleName: 'asm-policy-v0.0.1',
+        bundleDisplayName: 'Anthos Service Mesh v0.0.1',
+        bundleLink: 'https://cloud.google.com/anthos-config-management/docs/how-to/using-asm-security-policy',
+        bundleVersion: '202311.0',
+        bundleDescription: 'Use the ASM Policy v0.0.1 policy bundle with Policy Controller to evaluate the compliance of your clusters running Anthos Service Mesh against service mesh security best practices.',
+        controlNumbers: '[1.2.2]',
+        severity: 'UNSPECIFIED',
+        description: 'Enforce the AuthorizationPolicy normalization.',
+        remediation: 'Modify the corresponding value following the normalization guideline: https://istio.io/latest/docs/ops/best-practices/security/#understand-path-normalization-in-authorization-policy.',
+        minimumTemplateLibraryVersion: '1.11.1',
+        constraintHash: '54041f396306be741c13b7d16e78eb35f603b6abf8797ed2c8da861243016b4e'
+      }"
+    policycontroller.gke.io/bundleVersion: "202311.0"
+spec:
+  enforcementAction: dryrun
+  match:
+    kinds:
+      - apiGroups:
+          - security.istio.io
+        kinds:
+          - AuthorizationPolicy

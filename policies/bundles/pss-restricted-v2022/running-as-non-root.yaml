@@ -1,0 +1,48 @@
+# Copyright 2024 Google LLC
+#
+# This is “Software” that is licensed under the “General Software” section of
+# the Service Specific Terms (https://cloud.google.com/terms/service-terms) for
+# usage in accordance with the following “Scope of Use”: This file may only be
+# used on an Anthos cluster, including any associated ci/cd use. “Anthos
+# cluster” is defined as “A Cluster (of any kind) registered to a fleet project
+# where the Anthos API is enabled”.
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sPSSRunAsNonRoot
+metadata:
+  name: pss-restricted-v2022-running-as-non-root
+  labels:
+    policycontroller.gke.io/bundleName: pss-restricted-v2022
+  annotations:
+    policycontroller.gke.io/bundleVersion: "202403.1"
+    policycontroller.gke.io/constraintData: |-
+      "{
+        bundleName: 'pss-restricted-v2022',
+        bundleDisplayName: 'Pod Security Standards Restricted v2022',
+        bundleLink: 'https://cloud.google.com/anthos-config-management/docs/how-to/using-pss-restricted',
+        bundleVersion: '202403.1',
+        bundleDescription: 'Use the Pod Security Standards Restricted v2022 policy bundle with Policy Controller to achieve many of the Kubernetes Pod Security Standards Restricted policy protections.',
+        controlNumbers: '[]',
+        severity: 'UNSPECIFIED',
+        description: 'Containers must be required to run as non-root users. See "Pod Security Standards" for more information: https://kubernetes.io/docs/concepts/security/pod-security-standards/#restricted',
+        remediation: 'Set your pods and containers with `securityContext.runAsNonRoot: true`.',
+        minimumTemplateLibraryVersion: '1.17.3',
+        constraintHash: '578967fba871a9f2748d08cb0b4c3c0b0d42a43bf3e3aaa494ec26626089b374'
+      }"
+spec:
+  enforcementAction: dryrun
+  match:
+    kinds:
+      - apiGroups:
+          - ""
+        kinds:
+          - Pod
+    excludedNamespaces:
+      - kube-system
+      - gatekeeper-system
+      - anthos-identity-service
+      - gke-system
+      - cluster-* # Anthos clusters on bare metal
+      - capi-kubeadm-bootstrap-system
+      - capi-system
+      - vm-system
+      - gke-managed-cim

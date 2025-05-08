@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 apiVersion: constraints.gatekeeper.sh/v1beta1
-kind: K8sRequireNamespaceNetworkPolicies
+kind: SEK8sRequireNamespaceNetworkPolicies
 metadata:
   name: cis-k8s-v1.5.1-require-namespace-network-policies
   labels:

@@ -35,6 +35,7 @@ spec:
       - gke-connect
       - resource-group-system
       - apigee
+      - kube-system
     kinds:
       - apiGroups:
           - rbac.authorization.k8s.io

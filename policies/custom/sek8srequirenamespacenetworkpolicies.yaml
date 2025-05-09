@@ -50,12 +50,11 @@ spec:
       
       # Helper function to check if any NetworkPolicy exists for the given namespace 'ns'
       namespace_has_networkpolicy(ns) {
-        # Use the CORRECT path to check for NetworkPolicies in the inventory
         # Check if the count of NetworkPolicies in namespace 'ns' is greater than 0
         count(data.inventory.cluster["networking.k8s.io/v1"]["NetworkPolicy"][ns]) > 0
       }
       
-      # Helper function to identify system namespaces to exclude (customize this list). Add other system namespaces as needed
+      # Helper functions to identify system namespaces to exclude
       is_system_namespace(ns) {
         startswith(ns, "kube-")
       }

@@ -16,7 +16,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
 - 5.1.1_restrict-clusteradmin-rolebindings.yaml
-- 5.1.3_prohibit-role-wildcard-access.yaml
+#- 5.1.3_prohibit-role-wildcard-access.yaml - use the custom SE version
 - 5.2.1_psp-privileged-container.yaml
 - 5.2.2-5.2.3_psp-host-namespace.yaml
 - 5.2.4_psp-host-network-ports.yaml

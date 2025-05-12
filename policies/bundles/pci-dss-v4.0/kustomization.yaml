@@ -27,5 +27,5 @@ resources:
 - restrict-node-image.yaml
 - restrict-pods-exec.yaml
 - restrict-rbac-subjects.yaml
-- restrict-role-wildcards.yaml
+#- restrict-role-wildcards.yaml - use the custom SE version
 - restrict-storageclass.yaml

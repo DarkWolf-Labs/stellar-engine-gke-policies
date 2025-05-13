@@ -12,7 +12,7 @@ resources:
 - 1.1.4_resources-have-required-labels.yaml
 - 1.1.5-2.4_apps-must-have-certain-set-of-annotations.yaml
 - 1.2.2_8.1.2_enforce-managed-by-configmanagement-label.yaml
-#- 1.2_require-namespace-network-policies.yaml - use the custom SE version
+- 1.2_require-namespace-network-policies.yaml
 - 10.4.1-10.4.3_nodes-have-consistent-time.yaml
 - 2.1_block-creation-with-default-serviceaccount.yaml
 - 2.1_restrict-default-namespace.yaml

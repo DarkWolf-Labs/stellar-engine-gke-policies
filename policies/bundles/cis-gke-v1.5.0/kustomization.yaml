@@ -23,7 +23,7 @@ resources:
 - require-gke-metadata-server-enabled.yaml
 - require-ingress.class-gce.yaml
 - require-managed-certificates.yaml
-#- require-namespace-networkpolicy.yaml - use the custom SE version
+- require-namespace-networkpolicy.yaml
 - require-seccomp-default.yaml
 - require-securitycontext.yaml
 - restrict-automountserviceaccounttoken.yaml
@@ -39,7 +39,7 @@ resources:
 - restrict-pods-create.yaml
 - restrict-rbac-subjects.yaml
 - restrict-role-secrets.yaml
-# - restrict-role-wildcards.yaml - use the custom SE version
+- restrict-role-wildcards.yaml
 - restrict-secrets-of-type-basic-auth.yaml
 - restrict-serviceaccounts-token.yaml
 - restrict-system-masters-group.yaml

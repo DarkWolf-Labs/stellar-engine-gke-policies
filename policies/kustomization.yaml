@@ -4,4 +4,4 @@ kind: Kustomization
 resources:
 - templates
 - bundles
-- custom
+#- custom

@@ -95,3 +95,4 @@ spec:
         - name: apigee
         - name: apigee-init
         - name: system:metrics-server-nanny
+        - name: system:kubestore-collector

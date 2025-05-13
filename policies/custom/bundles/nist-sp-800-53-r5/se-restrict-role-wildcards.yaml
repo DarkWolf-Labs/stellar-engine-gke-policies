@@ -43,6 +43,9 @@ spec:
           - Role
   parameters:
     exemptions:
+      roles:
+        - name: gke-spiffe-leaderelection
+          namespace: kube-system
       clusterRoles:
         - name: config-management-operator
         - name: configsync.gke.io:ns-reconciler
@@ -95,4 +98,3 @@ spec:
         - name: apigee
         - name: apigee-init
         - name: system:metrics-server-nanny
-        - name: system:kubestore-collector

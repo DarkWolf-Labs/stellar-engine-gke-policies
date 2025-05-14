@@ -6,14 +6,14 @@ metadata:
   namespace: clamav
 data:
   clamd.conf: |
-    # Basic clamd configuration
+    # Basic clamd configuration (leave as is for now)
     LogFile /var/log/clamav/clamd.log
     LogTime yes
     PidFile /run/clamav/clamd.pid
     LocalSocket /run/clamav/clamd.sock
     FixStaleSocket yes
-    User clamav # Ensure your container image runs clamd as this user or adjust
-    ScanOnAccess false # Requires kernel support, typically off in containers
+    User clamav
+    ScanOnAccess false
     DetectPUA yes
     ScanPUP yes
     MaxScanSize 200M
@@ -23,7 +23,8 @@ data:
     StreamMaxLength 150M
 
   freshclam.conf: |
-    # Basic freshclam configuration
+    # Basic freshclam.conf
     DatabaseDirectory /var/lib/clamav
     UpdateLogFile /var/log/clamav/freshclam.log
     DatabaseOwner clamav
+    DatabaseMirror database.clamav.net

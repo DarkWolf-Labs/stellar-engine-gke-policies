@@ -60,24 +60,24 @@ spec:
         image: clamav/clamav:1.3.0
         command: ["/bin/sh", "-c"]
         args:
-          - >
-            set -e;
-            CLAMD_CONF="/etc/clamav/clamd.conf";
-            echo "INFO: clamd waiting for initial virus definitions...";
-            echo "INFO: Content of $CLAMD_CONF (checking if readable):";
-            cat $CLAMD_CONF || echo "WARN: Could not cat $CLAMD_CONF"; # Debug line
-            # Wait for both main and daily definitions to be present and non-empty
-            while true; do
-              if [ -s /var/lib/clamav/main.cvd ] && [ -s /var/lib/clamav/daily.cvd ]; then
-                echo "INFO: Main and daily definitions found and not empty.";
-                break;
-              fi;
-              echo "INFO: Still waiting for main.cvd AND daily.cvd to be populated by freshclam...";
-              sleep 10;
-            done;
-            echo "INFO: Definitions found. Starting clamd...";
-            # Use exec to make clamd the main process
-            exec clamd --config-file=$CLAMD_CONF --verbose;
+          - |
+            set -e
+            CLAMD_CONF="/etc/clamav/clamd.conf"
+            echo "INFO (clamd): Waiting for initial virus definitions..."
+            echo "INFO (clamd): Content of $CLAMD_CONF (checking if readable):"
+            cat "$CLAMD_CONF" || echo "WARN (clamd): Could not cat $CLAMD_CONF"
+            while true
+            do
+              if [ -s "/var/lib/clamav/main.cvd" ] && [ -s "/var/lib/clamav/daily.cvd" ]
+              then
+                echo "INFO (clamd): Main and daily definitions found and not empty."
+                break # Exit the loop
+              fi
+              echo "INFO (clamd): Still waiting for main.cvd AND daily.cvd to be populated by freshclam..."
+              sleep 10
+            done
+            echo "INFO (clamd): Definitions found. Starting clamd..."
+            exec clamd --config-file="$CLAMD_CONF" --verbose
         ports:
         - name: clamd-sock
           containerPort: 3310 # Default clamd port

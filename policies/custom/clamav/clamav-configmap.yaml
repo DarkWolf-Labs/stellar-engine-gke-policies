@@ -13,9 +13,7 @@ data:
     LocalSocket /run/clamav/clamd.sock
     FixStaleSocket yes
     User clamav
-    ScanOnAccess false
     DetectPUA yes
-    ScanPUP yes
     MaxScanSize 200M
     MaxFileSize 100M
     MaxRecursion 16

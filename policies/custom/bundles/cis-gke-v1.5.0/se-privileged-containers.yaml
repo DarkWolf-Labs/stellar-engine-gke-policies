@@ -9,21 +9,21 @@
 apiVersion: constraints.gatekeeper.sh/v1beta1
 kind: K8sPSPPrivilegedContainer
 metadata:
-  name: nist-sp-800-190-privileged-containers
+  name: cis-gke-v1.5.0-privileged-containers
   labels:
-    policycontroller.gke.io/bundleName: nist-sp-800-190
+    policycontroller.gke.io/bundleName: cis-gke-v1.5.0
   annotations:
-    policycontroller.gke.io/bundleVersion: "202403.0"
+    policycontroller.gke.io/bundleVersion: "202405.0"
     policycontroller.gke.io/constraintData: |-
       "{
-        bundleName: 'nist-sp-800-190',
-        bundleDisplayName: 'NIST SP 800-190',
-        bundleLink: 'https://cloud.google.com/anthos-config-management/docs/how-to/using-nist-sp-800-190',
-        bundleVersion: '202403.0',
-        bundleDescription: 'Use the NIST SP 800-190 policy bundle with Policy Controller to evaluate the compliance of your cluster resources against some aspects of the NIST SP 800-190 Appendix B controls.',
-        controlNumbers: '[CM-3,CM-7]',
+        bundleName: 'cis-gke-v1.5.0',
+        bundleDisplayName: 'CIS GKE Benchmark v1.5.0',
+        bundleLink: 'https://cloud.google.com/anthos-config-management/docs/how-to/using-cis-gke-v1.5',
+        bundleVersion: '202405.0',
+        bundleDescription: 'Use the CIS GKE Benchmark 1.5.0 policy bundle with Policy Controller to evaluate the compliance of your cluster resources against the CIS GKE Benchmark v1.5.0, which is a set of recommendations for configuring GKE to support a robust security posture.',
+        controlNumbers: '[4.2.1]',
         severity: 'UNSPECIFIED',
-        description: 'Restricts containers with `securityContext.privileged` set to `true`.',
+        description: 'Privileged Pods disable most security mechanisms and must be disallowed. See "Pod Security Standards" for more information: https://kubernetes.io/docs/concepts/security/pod-security-standards/#baseline',
         remediation: 'Containers cannot run with `securityContext.privileged` set to `true`. Remove `securityContext.privileged: true` from your containers. See "Configure a Security Context for a Pod or Container" for more information: https://kubernetes.io/docs/tasks/configure-pod-container/security-context',
         minimumTemplateLibraryVersion: '1.11.1',
         constraintHash: '873189cf522a88880548ef043f8c61b64b10ebe533c22974007633439994b2bb'
@@ -38,3 +38,4 @@ spec:
       - Pod
     excludedNamespaces:
     - kube-system
+    - clamav

@@ -7,9 +7,9 @@
 # cluster” is defined as “A Cluster (of any kind) registered to a fleet project
 # where the Anthos API is enabled”.
 apiVersion: constraints.gatekeeper.sh/v1beta1
-kind: K8sPSPPrivilegedContainer
+kind: K8sPSPHostFilesystem
 metadata:
-  name: nist-sp-800-190-privileged-containers
+  name: nist-sp-800-190-restrict-hostpath-volumes
   labels:
     policycontroller.gke.io/bundleName: nist-sp-800-190
   annotations:
@@ -21,20 +21,22 @@ metadata:
         bundleLink: 'https://cloud.google.com/anthos-config-management/docs/how-to/using-nist-sp-800-190',
         bundleVersion: '202403.0',
         bundleDescription: 'Use the NIST SP 800-190 policy bundle with Policy Controller to evaluate the compliance of your cluster resources against some aspects of the NIST SP 800-190 Appendix B controls.',
-        controlNumbers: '[CM-3,CM-7]',
+        controlNumbers: '[CM-3,CM-6,CM-7,AC-4,SI-7]',
         severity: 'UNSPECIFIED',
-        description: 'Restricts containers with `securityContext.privileged` set to `true`.',
-        remediation: 'Containers cannot run with `securityContext.privileged` set to `true`. Remove `securityContext.privileged: true` from your containers. See "Configure a Security Context for a Pod or Container" for more information: https://kubernetes.io/docs/tasks/configure-pod-container/security-context',
-        minimumTemplateLibraryVersion: '1.11.1',
-        constraintHash: '873189cf522a88880548ef043f8c61b64b10ebe533c22974007633439994b2bb'
+        description: 'Restricts the use of `HostPath` volumes.',
+        remediation: 'Cannot use `HostPath` volumes. Remove all `HostPath` volumes from your containers.',
+        minimumTemplateLibraryVersion: '1.10.1',
+        constraintHash: 'ac2b1d2421c0821ced9ee2436cc71e8325156195c93b5f23edde87a79847e9ca'
       }"
 spec:
   enforcementAction: dryrun
   match:
     kinds:
-    - apiGroups:
-      - ""
-      kinds:
-      - Pod
+      - apiGroups:
+          - ""
+        kinds:
+          - Pod
     excludedNamespaces:
-    - kube-system
+      - kube-system
+      - gke-system
+      - clamav

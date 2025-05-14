@@ -57,3 +57,4 @@ spec:
       - gcr.io/gkeconnect/
       - gke.gcr.io/
       - artifactregistry.gcr.io/gke-release/
+      - docker.io/clamav/

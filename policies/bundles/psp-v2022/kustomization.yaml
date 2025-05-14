@@ -21,11 +21,11 @@ resources:
 - psp-flexvolume-drivers.yaml
 - psp-forbidden-sysctls.yaml
 - psp-fsgroup.yaml
-- psp-host-filesystem.yaml
+#- psp-host-filesystem.yaml - use the custom SE version
 - psp-host-namespace.yaml
 - psp-host-network-ports.yaml
 - psp-pods-allowed-user-ranges.yaml
-- psp-privileged-container.yaml
+#- psp-privileged-container.yaml - use the custom SE version
 - psp-proc-mount.yaml
 - psp-readonlyrootfilesystem.yaml
 - psp-seccomp.yaml

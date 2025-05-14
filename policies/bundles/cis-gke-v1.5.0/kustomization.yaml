@@ -14,9 +14,9 @@ resources:
 - host-namespace.yaml
 - host-port.yaml
 - host_namespaces_hostnetwork.yaml
-- hostpath-volumes.yaml
+#- hostpath-volumes.yaml - use the custom SE version
 - hostprocess.yaml
-- privileged-containers.yaml
+#- privileged-containers.yaml - use the custom SE version
 - proc_mount_type.yaml
 - require-binauthz.yaml
 - require-cos-node-image.yaml

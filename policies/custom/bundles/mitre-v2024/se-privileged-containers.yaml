@@ -9,19 +9,19 @@
 apiVersion: constraints.gatekeeper.sh/v1beta1
 kind: K8sPSPPrivilegedContainer
 metadata:
-  name: nist-sp-800-190-privileged-containers
+  name: mitre-v2024-privileged-containers
   labels:
-    policycontroller.gke.io/bundleName: nist-sp-800-190
+    policycontroller.gke.io/bundleName: mitre-v2024
   annotations:
-    policycontroller.gke.io/bundleVersion: "202403.0"
+    policycontroller.gke.io/bundleVersion: 202402.0-preview
     policycontroller.gke.io/constraintData: |-
       "{
-        bundleName: 'nist-sp-800-190',
-        bundleDisplayName: 'NIST SP 800-190',
-        bundleLink: 'https://cloud.google.com/anthos-config-management/docs/how-to/using-nist-sp-800-190',
-        bundleVersion: '202403.0',
-        bundleDescription: 'Use the NIST SP 800-190 policy bundle with Policy Controller to evaluate the compliance of your cluster resources against some aspects of the NIST SP 800-190 Appendix B controls.',
-        controlNumbers: '[CM-3,CM-7]',
+        bundleName: 'mitre-v2024',
+        bundleDisplayName: 'MITRE',
+        bundleLink: 'https://cloud.google.com/anthos-config-management/docs/how-to/using-mitre-v2024',
+        bundleVersion: '202402.0-preview',
+        bundleDescription: 'Use the MITRE policy bundle with Policy Controller to evaluate the compliance of your cluster resources against some aspects of the MITRE knowledge base of adversary tactics and techniques based on real-world observations.',
+        controlNumbers: '[]',
         severity: 'UNSPECIFIED',
         description: 'Restricts containers with `securityContext.privileged` set to `true`.',
         remediation: 'Containers cannot run with `securityContext.privileged` set to `true`. Remove `securityContext.privileged: true` from your containers. See "Configure a Security Context for a Pod or Container" for more information: https://kubernetes.io/docs/tasks/configure-pod-container/security-context',

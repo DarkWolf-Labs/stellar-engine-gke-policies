@@ -19,16 +19,16 @@ resources:
 - host-namespaces.yaml
 - host-network.yaml
 - nodes-have-consistent-time.yaml
-- privileged-containers.yaml
+#- privileged-containers.yaml              - use the custom SE version
 - proc-mount-type.yaml
 - require-binauthz.yaml
 - require-managed-by-label.yaml
 #- require-namespace-network-policies.yaml - use the custom SE version
 - restrict-clusteradmin-rolebindings.yaml
-- restrict-hostpath-volumes.yaml
+#- restrict-hostpath-volumes.yaml          - use the custom SE version
 - restrict-rbac-subjects.yaml
 - restrict-repos.yaml
-#- restrict-role-wildcards.yaml - use the custom SE version
+#- restrict-role-wildcards.yaml            - use the custom SE version
 - restrict-volume-types.yaml
 - seccomp.yaml
 - selinux.yaml

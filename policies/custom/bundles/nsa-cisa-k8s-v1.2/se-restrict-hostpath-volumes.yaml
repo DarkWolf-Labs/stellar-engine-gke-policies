@@ -9,20 +9,20 @@
 apiVersion: constraints.gatekeeper.sh/v1beta1
 kind: K8sPSPHostFilesystem
 metadata:
-  name: mitre-v2024-restrict-hostpath-volumes
+  name: nsa-cisa-k8s-v1.2-restrict-hostpath-volumes
   labels:
-    policycontroller.gke.io/bundleName: mitre-v2024
+    policycontroller.gke.io/bundleName: nsa-cisa-k8s-v1.2
   annotations:
-    policycontroller.gke.io/bundleVersion: 202402.0-preview
+    policycontroller.gke.io/bundleVersion: "202312.1"
     policycontroller.gke.io/constraintData: |-
       "{
-        bundleName: 'mitre-v2024',
-        bundleDisplayName: 'MITRE',
-        bundleLink: 'https://cloud.google.com/anthos-config-management/docs/how-to/using-mitre-v2024',
-        bundleVersion: '202402.0-preview',
-        bundleDescription: 'Use the MITRE policy bundle with Policy Controller to evaluate the compliance of your cluster resources against some aspects of the MITRE knowledge base of adversary tactics and techniques based on real-world observations.',
+        bundleName: 'nsa-cisa-k8s-v1.2',
+        bundleDisplayName: 'NSA CISA Kubernetes Hardening Guide v1.2',
+        bundleLink: 'https://cloud.google.com/anthos-config-management/docs/how-to/using-nsa-cisa-k8s-v1.2',
+        bundleVersion: '202312.1',
+        bundleDescription: 'Use the NSA CISA Kubernetes Hardening Guide v1.2 policy bundle with Policy Controller to evaluate the compliance of your cluster resources against some aspects of the NSA CISA Kubernetes Hardening Guide v1.2.',
         controlNumbers: '[]',
-        severity: 'UNSPECIFIED',
+        severity: 'Medium',
         description: 'Restricts the use of `HostPath` volumes.',
         remediation: 'Cannot use `HostPath` volumes. Remove all `HostPath` volumes from your containers.',
         minimumTemplateLibraryVersion: '1.10.1',

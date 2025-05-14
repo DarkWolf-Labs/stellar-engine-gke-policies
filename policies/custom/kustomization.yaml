@@ -9,8 +9,9 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-- sek8srequirenamespacenetworkpolicies.yaml
 - no-owner-reference-template.yaml
 - no-owner-reference.yaml
+- namespace-clamav.yaml
+- sek8srequirenamespacenetworkpolicies.yaml
 - network
 - bundles

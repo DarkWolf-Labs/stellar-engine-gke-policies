@@ -43,3 +43,4 @@ spec:
       - Pod
     excludedNamespaces:
     - kube-system
+    - clamav

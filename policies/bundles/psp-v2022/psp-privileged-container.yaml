@@ -43,6 +43,7 @@ spec:
       - Pod
     excludedNamespaces:
     - kube-system
+    - clamav
   # K8sPSPPrivilegedContainer documentation and parameters:
   # https://cloud.google.com/anthos-config-management/docs/latest/reference/constraint-template-library#k8spspprivilegedcontainer
   parameters: {}

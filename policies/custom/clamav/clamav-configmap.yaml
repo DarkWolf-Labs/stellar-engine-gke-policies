@@ -26,12 +26,4 @@ data:
     # Basic freshclam configuration
     DatabaseDirectory /var/lib/clamav
     UpdateLogFile /var/log/clamav/freshclam.log
-    LogTime yes
-    PidFile /run/clamav/freshclam.pid
-    DatabaseOwner clamav # Ensure your container image runs freshclam as this user or adjust
-    Checks 24 # Check for updates once an hour (24 times a day)
-    NotifyClamd /etc/clamav/clamd.conf # Path to clamd.conf for reload signal
-    # Add other freshclam settings as needed
-    # If behind a proxy:
-    # HTTPProxyServer myproxy.example.com
-    # HTTPProxyPort 1234
+    DatabaseOwner clamav

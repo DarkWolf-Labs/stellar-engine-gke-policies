@@ -22,7 +22,7 @@ spec:
         image: clamav/clamav:1.3.0
         command: ["/bin/sh", "-c"]
         args:
-          - >
+          - |
             set -e;
             echo "INFO: Ensuring directories...";
             mkdir -p /var/lib/clamav /var/log/clamav /run/clamav;
@@ -30,15 +30,16 @@ spec:
             echo "INFO: Content of $FRESHCLAM_CONF (checking if readable):";
             cat $FRESHCLAM_CONF || echo "WARN: Could not cat $FRESHCLAM_CONF"; # Debug line
             # Check if main or daily definitions are missing or empty
-            if [ ! -s /var/lib/clamav/main.cvd ] || [ ! -s /var/lib/clamav/daily.cvd ]; then
-              echo "INFO: Main or daily definitions not found/empty, performing initial download...";
-              freshclam --config-file=$FRESHCLAM_CONF --verbose --stdout --datadir=/var/lib/clamav;
-              echo "INFO: Initial download complete.";
+            if [ ! -s "/var/lib/clamav/main.cvd" ] || [ ! -s "/var/lib/clamav/daily.cvd" ]
+            then
+              echo "INFO (freshclam): Main or daily definitions not found/empty, performing initial download..."
+              freshclam --config-file="$FRESHCLAM_CONF" --verbose --stdout --datadir=/var/lib/clamav
+              echo "INFO (freshclam): Initial download complete."
             else
-              echo "INFO: Definitions found in /var/lib/clamav, freshclam daemon will update them.";
-            fi;
-            echo "INFO: Starting freshclam daemon in the foreground...";
-            exec freshclam --config-file=$FRESHCLAM_CONF -d --foreground --verbose --datadir=/var/lib/clamav;
+              echo "INFO (freshclam): Definitions found in /var/lib/clamav."
+            fi
+            echo "INFO (freshclam): Starting freshclam daemon in the foreground..."
+            exec freshclam --config-file="$FRESHCLAM_CONF" -d --foreground --verbose --datadir=/var/lib/clamav
         volumeMounts:
         - name: clamav-defs
           mountPath: /var/lib/clamav

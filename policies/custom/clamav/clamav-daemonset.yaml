@@ -78,7 +78,7 @@ spec:
               sleep 10
             done
             echo "INFO (clamd): Definitions found. Starting clamd..."
-            exec clamd --config-file="$CLAMD_CONF" --verbose
+            exec clamd --config-file="$CLAMD_CONF"
         ports:
         - name: clamd-sock
           containerPort: 3310 # Default clamd port

@@ -1,0 +1,110 @@
+# policies/clamav/clamav-daemonset.yaml
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: clamav-daemon
+  namespace: clamav
+  labels:
+    app: clamav
+spec:
+  selector:
+    matchLabels:
+      app: clamav
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: clamav
+    spec:
+      # Tolerations might be needed if you want it on all nodes including masters (if applicable)
+      # tolerations:
+      # - key: "node-role.kubernetes.io/master"
+      #   effect: "NoSchedule"
+      # - key: "node-role.kubernetes.io/control-plane"
+      #   effect: "NoSchedule"
+      containers:
+      - name: freshclam
+        # Use a reputable, up-to-date image. The official clamav/clamav image can be a good start.
+        image: clamav/clamav:1.3.0 # Check for the latest stable version
+        command: ["/bin/sh", "-c"]
+        args:
+          - >
+            set -e;
+            # Initial definition download
+            echo "INFO: Initial definition download attempt...";
+            freshclam --verbose --stdout --datadir=/var/lib/clamav;
+            echo "INFO: Initial download complete. Starting freshclam daemon...";
+            # Start freshclam daemon to keep definitions updated
+            freshclam -d --verbose --stdout --checks=24 --datadir=/var/lib/clamav;
+        volumeMounts:
+        - name: clamav-defs
+          mountPath: /var/lib/clamav
+        - name: clamav-logs
+          mountPath: /var/log/clamav
+        - name: clamav-run
+          mountPath: /run/clamav
+        - name: clamav-config-volume
+          mountPath: /etc/clamav/freshclam.conf
+          subPath: freshclam.conf
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "512Mi"
+          limits:
+            cpu: "500m"
+            memory: "1Gi"
+      - name: clamd
+        image: clamav/clamav:1.3.0
+        command: ["/bin/sh", "-c"]
+        args:
+          - >
+            set -e;
+            # Wait for freshclam to download initial definitions
+            while [ ! -f /var/lib/clamav/main.cvd ] && [ ! -f /var/lib/clamav/main.cld ]; do
+              echo "INFO: Waiting for initial virus definitions...";
+              sleep 5;
+            done;
+            echo "INFO: Definitions found. Starting clamd...";
+            clamd --verbose --config-file=/etc/clamav/clamd.conf;
+        ports:
+        - name: clamd-sock
+          containerPort: 3310 # Default clamd port
+        volumeMounts:
+        - name: clamav-defs
+          mountPath: /var/lib/clamav
+          readOnly: false 
+        - name: clamav-logs
+          mountPath: /var/log/clamav
+        - name: clamav-run
+          mountPath: /run/clamav
+        - name: host-filesystem
+          mountPath: /hostfs # Mount the entire host filesystem read-only
+          readOnly: true
+        - name: clamav-config-volume
+          mountPath: /etc/clamav/clamd.conf
+          subPath: clamd.conf
+        securityContext:
+          # IMPORTANT: To scan the host filesystem, clamd usually needs elevated privileges.
+          privileged: true
+        resources:
+          requests:
+            cpu: "200m"
+            memory: "1Gi" # clamd can be memory intensive during scans
+          limits:
+            cpu: "1"
+            memory: "2Gi"
+      volumes:
+      - name: clamav-defs
+        emptyDir: {}
+      - name: clamav-logs
+        emptyDir: {}
+      - name: clamav-run
+        emptyDir: {}
+      - name: host-filesystem
+        hostPath:
+          path: / # Mounts the entire host filesystem
+          type: Directory
+      - name: clamav-config-volume
+        configMap:
+          name: clamav-config

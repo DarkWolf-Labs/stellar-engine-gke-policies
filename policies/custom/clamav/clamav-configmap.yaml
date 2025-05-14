@@ -1,0 +1,37 @@
+# policies/clamav/clamav-configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: clamav-config
+  namespace: clamav
+data:
+  clamd.conf: |
+    # Basic clamd configuration
+    LogFile /var/log/clamav/clamd.log
+    LogTime yes
+    PidFile /run/clamav/clamd.pid
+    LocalSocket /run/clamav/clamd.sock
+    FixStaleSocket yes
+    User clamav # Ensure your container image runs clamd as this user or adjust
+    ScanOnAccess false # Requires kernel support, typically off in containers
+    DetectPUA yes
+    ScanPUP yes
+    MaxScanSize 200M
+    MaxFileSize 100M
+    MaxRecursion 16
+    MaxFiles 10000
+    StreamMaxLength 150M
+
+  freshclam.conf: |
+    # Basic freshclam configuration
+    DatabaseDirectory /var/lib/clamav
+    UpdateLogFile /var/log/clamav/freshclam.log
+    LogTime yes
+    PidFile /run/clamav/freshclam.pid
+    DatabaseOwner clamav # Ensure your container image runs freshclam as this user or adjust
+    Checks 24 # Check for updates once an hour (24 times a day)
+    NotifyClamd /etc/clamav/clamd.conf # Path to clamd.conf for reload signal
+    # Add other freshclam settings as needed
+    # If behind a proxy:
+    # HTTPProxyServer myproxy.example.com
+    # HTTPProxyPort 1234

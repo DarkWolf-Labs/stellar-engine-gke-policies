@@ -31,12 +31,17 @@ spec:
         args:
           - >
             set -e;
-            # Initial definition download
-            echo "INFO: Initial definition download attempt...";
-            freshclam --verbose --stdout --datadir=/var/lib/clamav;
-            echo "INFO: Initial download complete. Starting freshclam daemon...";
-            # Start freshclam daemon to keep definitions updated
-            freshclam -d --verbose --stdout --checks=24 --datadir=/var/lib/clamav;
+            echo "INFO: Ensuring directories and permissions...";
+            mkdir -p /var/lib/clamav /var/log/clamav /run/clamav;
+            if [ ! -f /var/lib/clamav/main.cvd ] && [ ! -f /var/lib/clamav/main.cld ] && [ ! -f /var/lib/clamav/daily.cvd ] && [ ! -f /var/lib/clamav/daily.cld ]; then
+              echo "INFO: No definitions found or only partial, performing initial download...";
+              freshclam --verbose --stdout --datadir=/var/lib/clamav;
+              echo "INFO: Initial download complete.";
+            else
+              echo "INFO: Definitions found in /var/lib/clamav, freshclam daemon will update them.";
+            fi;
+            echo "INFO: Starting freshclam daemon in the foreground...";
+            exec freshclam -d --foreground --verbose --checks=24 --datadir=/var/lib/clamav;
         volumeMounts:
         - name: clamav-defs
           mountPath: /var/lib/clamav

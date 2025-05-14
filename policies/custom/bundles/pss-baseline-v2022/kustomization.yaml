@@ -9,6 +9,5 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-- se-psp-host-filesystem.yaml
-- se-psp-privileged-container.yaml
-- se-psp-volume-types.yaml
+- se-hostpath-volumes.yaml
+- se-privileged-containers.yaml

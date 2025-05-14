@@ -20,9 +20,9 @@ resources:
 - host-namespaces-host-pid-ipc.yaml
 - host-namespaces-hostnetwork.yaml
 - host-ports.yaml
-- hostpath-volumes.yaml
+#- hostpath-volumes.yaml - use the custom SE version
 - hostprocess.yaml
-- privileged-containers.yaml
+#- privileged-containers.yaml - use the custom SE version
 - proc-mount-type.yaml
 - seccomp.yaml
 - selinux.yaml

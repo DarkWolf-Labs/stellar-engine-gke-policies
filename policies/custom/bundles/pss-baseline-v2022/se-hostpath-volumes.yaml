@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 apiVersion: constraints.gatekeeper.sh/v1beta1
-kind: K8sPSPPrivilegedContainer
+kind: K8sPSPHostFilesystem
 metadata:
-  name: pss-baseline-v2022-privileged-containers
+  name: pss-baseline-v2022-hostpath-volumes
   labels:
     policycontroller.gke.io/bundleName: pss-baseline-v2022
   annotations:
@@ -28,18 +28,20 @@ metadata:
         bundleDescription: 'Use the Pod Security Standards Baseline v2022 policy bundle with Policy Controller to achieve many of the Kubernetes Pod Security Standards Baseline policy protections.',
         controlNumbers: '[]',
         severity: 'UNSPECIFIED',
-        description: 'Privileged Pods disable most security mechanisms and must be disallowed.  https://kubernetes.io/docs/concepts/security/pod-security-standards/#baseline',
-        remediation: 'Containers cannot run with `securityContext.privileged` set to `true`. Remove `securityContext.privileged: true` from your containers. See "Configure a Security Context for a Pod or Container" for more information: https://kubernetes.io/docs/tasks/configure-pod-container/security-context',
-        minimumTemplateLibraryVersion: '1.11.1',
-        constraintHash: '873189cf522a88880548ef043f8c61b64b10ebe533c22974007633439994b2bb'
+        description: '`HostPath` volumes must be forbidden. https://kubernetes.io/docs/concepts/security/pod-security-standards/#baseline',
+        remediation: 'Cannot use `HostPath` volumes. Remove all `HostPath` volumes from your containers.',
+        minimumTemplateLibraryVersion: '1.10.1',
+        constraintHash: 'ac2b1d2421c0821ced9ee2436cc71e8325156195c93b5f23edde87a79847e9ca'
       }"
 spec:
   enforcementAction: dryrun
   match:
     kinds:
-    - apiGroups:
-      - ""
-      kinds:
-      - Pod
+      - apiGroups:
+          - ""
+        kinds:
+          - Pod
     excludedNamespaces:
-    - kube-system
+      - kube-system
+      - gke-system
+      - clamav

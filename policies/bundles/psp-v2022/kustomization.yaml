@@ -30,4 +30,4 @@ resources:
 - psp-readonlyrootfilesystem.yaml
 - psp-seccomp.yaml
 - psp-selinux-v2.yaml
-- psp-volume-types.yaml
+#- psp-volume-types.yaml - use the custom SE version

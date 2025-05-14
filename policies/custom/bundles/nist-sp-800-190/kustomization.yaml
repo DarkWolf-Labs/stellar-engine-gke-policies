@@ -11,5 +11,5 @@ kind: Kustomization
 resources:
 - se-privileged-containers.yaml
 - se-require-namespace-network-policies.yaml
-- se-restric-hostpath-volumes.yaml
+- se-restrict-hostpath-volumes.yaml
 - se-restrict-role-wildcards.yaml

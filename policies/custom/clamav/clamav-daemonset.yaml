@@ -23,6 +23,11 @@ spec:
         securityContext:
           runAsUser: 101
           runAsNonRoot: true
+          capabilities:
+            drop:
+            - ALL
+          seccompProfile:
+            type: RuntimeDefault
         command: ["/bin/sh", "-c"]
         args:
           - |
@@ -66,7 +71,10 @@ spec:
           runAsUser: 101
           runAsNonRoot: true
           # IMPORTANT: To scan the host filesystem, clamd usually needs elevated privileges.
-          privileged: true 
+          privileged: true
+          capabilities:
+            drop:
+            - ALL
         command: ["/bin/sh", "-c"]
         args:
           - |

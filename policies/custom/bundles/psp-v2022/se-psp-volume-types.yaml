@@ -44,6 +44,7 @@ spec:
     excludedNamespaces:
       - kube-system
       - gke-system
+      - clamav
   # K8sPSPVolumeTypes documentation and parameters:
   # https://cloud.google.com/anthos-config-management/docs/latest/reference/constraint-template-library#k8spspvolumetypes
   parameters:

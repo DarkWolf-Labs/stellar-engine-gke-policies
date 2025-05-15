@@ -55,4 +55,5 @@ spec:
       - gcr.io/kubebuilder/
       - gcr.io/gkeconnect/
       - gke.gcr.io/
+      - artifactregistry.gcr.io/gke-release/
       - clamav/

@@ -55,4 +55,4 @@ spec:
       - gcr.io/kubebuilder/
       - gcr.io/gkeconnect/
       - gke.gcr.io/
-      - docker.io/clamav/clamav/
+      - clamav/

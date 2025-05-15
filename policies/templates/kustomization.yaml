@@ -75,7 +75,7 @@ resources:
 - k8srequireadmissioncontroller.yaml
 - k8srequirebinauthz.yaml
 - k8srequirecosnodeimage.yaml
-- k8srequiredaemonsets.yaml
+#- k8srequiredaemonsets.yaml - use the custom SE version
 - k8srequiredannotations.yaml
 - k8srequiredefaultdenyegresspolicy.yaml
 - k8srequiredlabels.yaml

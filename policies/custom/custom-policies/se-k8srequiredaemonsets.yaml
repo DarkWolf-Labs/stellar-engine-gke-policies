@@ -1,0 +1,110 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  annotations:
+    description: Requires the list of daemonsets specified to be present.
+    metadata.gatekeeper.sh/requires-sync-data: |
+      "[
+        [
+          {
+            "groups": ["extensions"],
+            "versions": ["v1beta1"],
+            "kinds": ["DaemonSet"]
+          },
+          {
+            "groups": ["apps"],
+            "versions": ["v1beta2", "v1"],
+            "kinds": ["DaemonSet"]
+          }
+        ]
+      ]"
+    metadata.gatekeeper.sh/title: Required Daemonsets
+    metadata.gatekeeper.sh/version: 1.1.2
+  labels:
+    policycontroller.configmanagement.gke.io/referential: "true"
+  name: k8srequiredaemonsets
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sRequireDaemonsets
+      validation:
+        legacySchema: false
+        openAPIV3Schema:
+          properties:
+            requiredDaemonsets:
+              description: A list of names and namespaces of the required daemonsets.
+              items:
+                properties:
+                  name:
+                    description: The name of the required daemonset.
+                    type: string
+                  namespace:
+                    description: The namespace for the required daemonset.
+                    type: string
+                type: object
+              type: array
+            restrictNodeSelector:
+              default: false
+              description: The daemonsets cannot include `NodeSelector`.
+              type: boolean
+          type: object
+  targets:
+  - rego: |
+      package k8srequiredaemonsets
+
+      violation[{"msg": msg}] {
+        input.review.kind.kind == "Namespace"
+        input.review.object.metadata.name == "default" # Optimization: run this global check once per audit
+      
+        required := input.parameters.requiredDaemonsets[_]
+        not _namespace_exists(required.namespace)
+        msg := sprintf("Namespace <%v> (for required daemonset <%v>) does not exist", [required.namespace, required.name])
+      }
+      
+      violation[{"msg": msg}] {
+        input.review.kind.kind == "Namespace"
+        ns_under_review := input.review.object.metadata.name
+      
+        required := input.parameters.requiredDaemonsets[_]
+        ns_under_review == required.namespace # Focus on the relevant namespace for this required daemonset
+      
+        # Only proceed if the namespace is known to exist (prevents duplicate errors from above)
+        _namespace_exists(required.namespace)
+      
+        not _daemonset_is_compliant(required, input.parameters)
+        msg := sprintf("Namespace <%v> does not have a compliant required daemonset: <%v>", [required.namespace, required.name])
+      }
+      
+      # Helper: Check if namespace exists
+      _namespace_exists(ns_name) {
+        data.inventory.cluster["v1"]["Namespace"][ns_name]
+      }
+      
+      # Helper: Check if the daemonset exists and is compliant with restrictNodeSelector
+      _daemonset_is_compliant(required_ds_info, params) {
+        ds := data.inventory.cluster["apps/v1"]["DaemonSet"][required_ds_info.namespace][required_ds_info.name]
+      
+        # Check 1: DaemonSet must exist
+        count(ds) > 0 # True if ds object exists
+      
+        # Check 2: restrictNodeSelector logic
+        # If restrictNodeSelector is true, the DaemonSet MUST NOT have a nodeSelector.
+        restrict_ns := object.get(params, "restrictNodeSelector", false) # Default to false
+        if restrict_ns == true {
+          not _ds_has_nodeselector(ds)
+        } else {
+          true # If restrictNodeSelector is false, this check passes
+        }
+      
+        # Check 3: DaemonSet should be ready
+        # and ds.status.numberReady > 0
+        # and ds.status.numberReady == ds.status.desiredNumberScheduled
+      }
+      
+      # Helper: Check if a DaemonSet spec has a nodeSelector defined
+      _ds_has_nodeselector(ds) {
+        # True if ds.spec.template.spec.nodeSelector exists and is not an empty map
+        count(object.get(ds.spec.template.spec, "nodeSelector", {})) > 0
+      }
+    target: admission.k8s.gatekeeper.sh

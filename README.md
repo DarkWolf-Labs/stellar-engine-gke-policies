@@ -19,7 +19,6 @@ There are a number of different Kubernetes manafests within the custom folder.
  - New resources - 
    Additional folders are created in the custom folder to contain new resources (namespaces, daemonsets, etc.).
    
-
 ## Google GKE Dashboards
 
 There are two pages in the Google Console [GKE page](https://console.cloud.google.com/kubernetes) that provide insight into the configuration and status of a cluster.

@@ -25,12 +25,12 @@ resources:
 - restrict-env-var-secrets.yaml
 - restrict-host-namespace.yaml
 - restrict-host-port.yaml
-#- restrict-hostpath-volumes.yaml - use the custom SE version
+#- restrict-hostpath-volumes.yaml      - use the custom SE version
 - restrict-hosttnetwork.yaml
 - restrict-nodes-proxy.yaml
 - restrict-persistent-volume.yaml
 - restrict-pods-create.yaml
-- restrict-privilege-escalation.yaml
+#- restrict-privilege-escalation.yaml  - use the custom SE version
 #- restrict-privileged-containers.yaml - use the custom SE version
 - restrict-role-secrets.yaml
 - restrict-role-wildcards.yaml

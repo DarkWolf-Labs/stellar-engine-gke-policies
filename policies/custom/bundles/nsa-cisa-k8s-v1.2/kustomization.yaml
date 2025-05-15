@@ -10,5 +10,6 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
 - se-privileged-containers.yaml
+- se-privilege-escalation.yaml
 - se-restrict-hostpath-volumes.yaml
 - se-require-namespace-network-policies.yaml

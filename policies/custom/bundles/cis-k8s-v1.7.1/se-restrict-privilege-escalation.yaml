@@ -7,9 +7,9 @@
 # cluster” is defined as “A Cluster (of any kind) registered to a fleet project
 # where the Anthos API is enabled”.
 apiVersion: constraints.gatekeeper.sh/v1beta1
-kind: K8sPSPPrivilegedContainer
+kind: K8sPSPAllowPrivilegeEscalationContainer
 metadata:
-  name: cis-k8s-v1.7.1-restrict-privileged-containers
+  name: cis-k8s-v1.7.1-restrict-privilege-escalation
   labels:
     policycontroller.gke.io/bundleName: cis-k8s-v1.7.1
   annotations:
@@ -21,12 +21,12 @@ metadata:
         bundleLink: 'https://cloud.google.com/anthos-config-management/docs/how-to/using-cis-k8s-benchmark',
         bundleVersion: '202403.0-preview',
         bundleDescription: 'Use the CIS Kubernetes Benchmark 1.7.1 policy bundle with Policy Controller to evaluate the compliance of your cluster resources against the CIS Kubernetes Benchmark, which is a set of recommendations for configuring Kubernetes to support a robust security posture.',
-        controlNumbers: '[5.2.2]',
+        controlNumbers: '[5.2.6]',
         severity: 'UNSPECIFIED',
-        description: 'Restricts containers with `securityContext.privileged` set to `true`.',
-        remediation: 'Containers cannot run with `securityContext.privileged` set to `true`. Remove `securityContext.privileged: true` from your containers. See "Configure a Security Context for a Pod or Container" for more information: https://kubernetes.io/docs/tasks/configure-pod-container/security-context',
+        description: 'Restricts containers with `allowPrivilegeEscalation` set to `true`.',
+        remediation: 'Containers cannot run with `allowPrivilegeEscalation` set to `true`. Set your containers with `allowPrivilegeEscalation: false`.',
         minimumTemplateLibraryVersion: '1.11.1',
-        constraintHash: '873189cf522a88880548ef043f8c61b64b10ebe533c22974007633439994b2bb'
+        constraintHash: 'd24bf9cb3555de60037a675a2198760b1eb17b452adb3be6d7b47106424cb38e'
       }"
 spec:
   enforcementAction: dryrun
@@ -38,3 +38,16 @@ spec:
       - Pod
     excludedNamespaces:
     - kube-system
+    - gke-system
+    - istio-system
+    - asm-system
+    - config-management-system
+    - config-management-monitoring
+    - resource-group-system
+    - cert-manager
+    - anthos-identity-service
+    - apigee
+    - clamav
+  parameters:
+    exemptImages:
+    - gcr.io/anthos-baremetal-release/*

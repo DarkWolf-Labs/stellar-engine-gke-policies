@@ -1,0 +1,43 @@
+# Copyright 2024 Google LLC
+#
+# This is “Software” that is licensed under the “General Software” section of
+# the Service Specific Terms (https://cloud.google.com/terms/service-terms) for
+# usage in accordance with the following “Scope of Use”: This file may only be
+# used on an Anthos cluster, including any associated ci/cd use. “Anthos
+# cluster” is defined as “A Cluster (of any kind) registered to a fleet project
+# where the Anthos API is enabled”.
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sRequireDaemonsets
+metadata:
+  name: nist-sp-800-53-r5-require-av-daemonset
+  labels:
+    policycontroller.gke.io/bundleName: nist-sp-800-53-r5
+  annotations:
+    policycontroller.gke.io/bundleVersion: "202403.0"
+    policycontroller.gke.io/constraintData: |-
+      "{
+        bundleName: 'nist-sp-800-53-r5',
+        bundleDisplayName: 'NIST SP 800-53 Rev. 5',
+        bundleLink: 'https://cloud.google.com/anthos-config-management/docs/how-to/using-nist-sp-800-53-r5',
+        bundleVersion: '202403.0',
+        bundleDescription: 'Use the NIST SP 800-53 Rev. 5 policy bundle with Policy Controller to evaluate the compliance of your cluster resources against some aspects of the NIST SP 800-53 Rev. 5 controls.',
+        controlNumbers: '[SI-3]',
+        severity: 'UNSPECIFIED',
+        description: 'Requires the presence of an Anti-Virus daemonset.',
+        remediation: 'Add an Anti-Virus daemonset, such as ClamAV, with the specified name and namespace.',
+        minimumTemplateLibraryVersion: '1.16.0',
+        constraintHash: '12d6315c68c852a9b99b6859461ca014af25b3e478b20df20e94a2b29a94c86c'
+      }"
+spec:
+  match:
+    kinds:
+      - apiGroups:
+          - ""
+        kinds:
+          - Namespace
+  enforcementAction: dryrun
+  parameters:
+    requiredDaemonsets:
+      - name: clamav
+        namespace: clamav
+    restrictNodeSelector: false

@@ -33,7 +33,7 @@ resources:
 #- restrict-privilege-escalation.yaml  - use the custom SE version
 #- restrict-privileged-containers.yaml - use the custom SE version
 - restrict-role-secrets.yaml
-- restrict-role-wildcards.yaml
+#- restrict-role-wildcards.yaml        - use the custom SE version
 - restrict-root-containers.yaml
 - restrict-secrets-of-type-basic-auth.yaml
 - restrict-serviceaccounts-token.yaml

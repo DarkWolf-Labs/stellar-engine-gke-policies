@@ -1,27 +1,32 @@
 # Copyright 2024 Google LLC
 #
-# This is “Software” that is licensed under the “General Software” section of
-# the Service Specific Terms (https://cloud.google.com/terms/service-terms) for
-# usage in accordance with the following “Scope of Use”: This file may only be
-# used on an Anthos cluster, including any associated ci/cd use. “Anthos
-# cluster” is defined as “A Cluster (of any kind) registered to a fleet project
-# where the Anthos API is enabled”.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 apiVersion: constraints.gatekeeper.sh/v1beta1
 kind: K8sProhibitRoleWildcardAccess
 metadata:
-  name: nist-sp-800-190-restrict-role-wildcards
+  name: policy-essentials-v2022-prohibit-role-wildcard-access
   labels:
-    policycontroller.gke.io/bundleName: nist-sp-800-190
+    policycontroller.gke.io/bundleName: policy-essentials-v2022
   annotations:
     policycontroller.gke.io/bundleVersion: "202403.0"
     policycontroller.gke.io/constraintData: |-
       "{
-        bundleName: 'nist-sp-800-190',
-        bundleDisplayName: 'NIST SP 800-190',
-        bundleLink: 'https://cloud.google.com/anthos-config-management/docs/how-to/using-nist-sp-800-190',
+        bundleName: 'policy-essentials-v2022',
+        bundleDisplayName: 'Policy Essentials v2022',
+        bundleLink: 'https://cloud.google.com/anthos-config-management/docs/how-to/using-policy-essentials-v2022',
         bundleVersion: '202403.0',
-        bundleDescription: 'Use the NIST SP 800-190 policy bundle with Policy Controller to evaluate the compliance of your cluster resources against some aspects of the NIST SP 800-190 Appendix B controls.',
-        controlNumbers: '[AC-6]',
+        bundleDescription: 'Use the Policy Essentials v2022 policy bundle with Policy Controller to apply Google recommended best practices to your cluster resources.',
+        controlNumbers: '[]',
         severity: 'UNSPECIFIED',
         description: 'Restricts the use of wildcards in `Roles` and `ClusterRoles`.',
         remediation: 'Cannot use the wildcard character in `Roles` and `ClusterRoles. Remove all wildcards from your `Roles` and `ClusterRoles`. See "RoleBinding and ClusterRoleBinding" for more information: https://kubernetes.io/docs/reference/access-authn-authz/rbac/#rolebinding-and-clusterrolebinding',

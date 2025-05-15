@@ -12,3 +12,4 @@ resources:
 - se-require-namespace-networkpolicy.yaml
 - se-restrict-hostpath-volumes.yaml
 - se-restrict-privilege-escalation.yaml
+- se-restrict-role-wildcards.yaml

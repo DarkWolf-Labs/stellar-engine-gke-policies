@@ -9,19 +9,19 @@
 apiVersion: constraints.gatekeeper.sh/v1beta1
 kind: K8sProhibitRoleWildcardAccess
 metadata:
-  name: nist-sp-800-190-restrict-role-wildcards
+  name: cis-k8s-v1.7.1-restrict-role-wildcards
   labels:
-    policycontroller.gke.io/bundleName: nist-sp-800-190
+    policycontroller.gke.io/bundleName: cis-k8s-v1.7.1
   annotations:
-    policycontroller.gke.io/bundleVersion: "202403.0"
+    policycontroller.gke.io/bundleVersion: 202403.0-preview
     policycontroller.gke.io/constraintData: |-
       "{
-        bundleName: 'nist-sp-800-190',
-        bundleDisplayName: 'NIST SP 800-190',
-        bundleLink: 'https://cloud.google.com/anthos-config-management/docs/how-to/using-nist-sp-800-190',
-        bundleVersion: '202403.0',
-        bundleDescription: 'Use the NIST SP 800-190 policy bundle with Policy Controller to evaluate the compliance of your cluster resources against some aspects of the NIST SP 800-190 Appendix B controls.',
-        controlNumbers: '[AC-6]',
+        bundleName: 'cis-k8s-v1.7.1',
+        bundleDisplayName: 'CIS Kubernetes Benchmark v1.7.1',
+        bundleLink: 'https://cloud.google.com/anthos-config-management/docs/how-to/using-cis-k8s-benchmark',
+        bundleVersion: '202403.0-preview',
+        bundleDescription: 'Use the CIS Kubernetes Benchmark 1.7.1 policy bundle with Policy Controller to evaluate the compliance of your cluster resources against the CIS Kubernetes Benchmark, which is a set of recommendations for configuring Kubernetes to support a robust security posture.',
+        controlNumbers: '[5.1.3]',
         severity: 'UNSPECIFIED',
         description: 'Restricts the use of wildcards in `Roles` and `ClusterRoles`.',
         remediation: 'Cannot use the wildcard character in `Roles` and `ClusterRoles. Remove all wildcards from your `Roles` and `ClusterRoles`. See "RoleBinding and ClusterRoleBinding" for more information: https://kubernetes.io/docs/reference/access-authn-authz/rbac/#rolebinding-and-clusterrolebinding',
@@ -43,9 +43,6 @@ spec:
           - Role
   parameters:
     exemptions:
-      roles:
-        - name: gke-spiffe-leaderelection
-          namespace: kube-system
       clusterRoles:
         - name: config-management-operator
         - name: configsync.gke.io:ns-reconciler
@@ -97,4 +94,3 @@ spec:
         - name: policycontroller
         - name: apigee
         - name: apigee-init
-        - name: system:metrics-server-nanny

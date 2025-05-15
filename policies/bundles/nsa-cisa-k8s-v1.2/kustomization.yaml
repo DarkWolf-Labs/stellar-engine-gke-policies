@@ -26,6 +26,6 @@ resources:
 - restrict-edit-rolebindings.yaml
 #- restrict-hostpath-volumes.yaml          - use the custom SE version
 - restrict-pods-exec.yaml
-- running-as-non-root.yaml
+#- running-as-non-root.yaml                - use the custom SE version
 - seccomp.yaml
 - selinux.yaml

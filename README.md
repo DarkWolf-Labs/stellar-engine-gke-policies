@@ -9,7 +9,18 @@ The constraints are in DRYRUN mode by default and do not hinder any workflows, b
  - Constraint Templates exported from the cluster with the template library deployed by Policy Controller.
  - Custom constraints and templates created to remediate violations found.
 
-## Dashboards
+## Custom Components
+
+There are a number of different Kubernetes manafests within the custom folder.
+ - Updated constraints or templates -
+   These are copied from the policies/bundles/xxx folder and placed into a custom/bundles/xxx folder.
+   The kusomization.yaml file in original folder is updated to skip deploying the file.
+   A new kustomization.yaml file is created in the specific custom bundle folder to apply the new updated version.
+ - New resources - 
+   Additional folders are created in the custom folder to contain new resources (namespaces, daemonsets, etc.).
+   
+
+## Google GKE Dashboards
 
 There are two pages in the Google Console [GKE page](https://console.cloud.google.com/kubernetes) that provide insight into the configuration and status of a cluster.
 

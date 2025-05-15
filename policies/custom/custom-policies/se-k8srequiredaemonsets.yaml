@@ -27,7 +27,7 @@ spec:
   crd:
     spec:
       names:
-        kind: K8sRequireDaemonsets
+        kind: SEK8sRequireDaemonsets
       validation:
         legacySchema: false
         openAPIV3Schema:
@@ -51,7 +51,7 @@ spec:
           type: object
   targets:
   - rego: |
-      package k8srequiredaemonsets
+      package sek8srequiredaemonsets
 
       # Violation if DaemonSet's namespace doesn't exist
       violation[{"msg": msg}] {

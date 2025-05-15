@@ -9,19 +9,19 @@
 apiVersion: constraints.gatekeeper.sh/v1beta1
 kind: SEK8sRequireDaemonsets
 metadata:
-  name: nist-sp-800-53-r5-require-av-daemonset
+  name: pci-dss-v4.0-require-av-daemonset
   labels:
-    policycontroller.gke.io/bundleName: nist-sp-800-53-r5
+    policycontroller.gke.io/bundleName: pci-dss-v4.0
   annotations:
     policycontroller.gke.io/bundleVersion: "202403.0"
     policycontroller.gke.io/constraintData: |-
       "{
-        bundleName: 'nist-sp-800-53-r5',
-        bundleDisplayName: 'NIST SP 800-53 Rev. 5',
-        bundleLink: 'https://cloud.google.com/anthos-config-management/docs/how-to/using-nist-sp-800-53-r5',
+        bundleName: 'pci-dss-v4.0',
+        bundleDisplayName: 'PCI DSS v4.0',
+        bundleLink: 'https://cloud.google.com/anthos-config-management/docs/how-to/using-pci-dss-v4',
         bundleVersion: '202403.0',
-        bundleDescription: 'Use the NIST SP 800-53 Rev. 5 policy bundle with Policy Controller to evaluate the compliance of your cluster resources against some aspects of the NIST SP 800-53 Rev. 5 controls.',
-        controlNumbers: '[SI-3]',
+        bundleDescription: 'Use the PCI DSS v4.0 policy bundle with Policy Controller to evaluate the compliance of your cluster resources against some aspects of the Payment Card Industry (PCI) Data Security Standard (DSS) v4.0.',
+        controlNumbers: '[5.2.1,5.2.2,5.2.3,5.3.1,5.3.2,5.3.5]',
         severity: 'UNSPECIFIED',
         description: 'Requires the presence of an Anti-Virus daemonset.',
         remediation: 'Add an Anti-Virus daemonset, such as ClamAV, with the specified name and namespace.',
@@ -40,4 +40,4 @@ spec:
     requiredDaemonsets:
       - name: clamav
         namespace: clamav
-    restrictNodeSelector: false
+    restrictNodeSelector: true

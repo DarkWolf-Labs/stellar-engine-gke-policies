@@ -17,7 +17,7 @@ resources:
 - host-namespaces-hostnetwork.yaml
 - host-ports.yaml
 - no-secrets-as-env-vars.yaml
-#- privileged-containers.yaml - use the custom SE version
+#- privileged-containers.yaml           - use the custom SE version
 - proc-mount-type.yaml
 - require-binauthz.yaml
 #- require-namespace-networkpolicy.yaml - use the custom SE version
@@ -25,11 +25,11 @@ resources:
 - restrict-automountserviceaccounttoken.yaml
 - restrict-capabilities.yaml
 - restrict-cluster-admin-role.yaml
-#- restrict-hostpath-volumes.yaml - use the custom SE version
+#- restrict-hostpath-volumes.yaml       - use the custom SE version
 - restrict-kubernetes-dashboard-namespace.yaml
 - restrict-pods-exec.yaml
 - restrict-rbac-subjects.yaml
-- restrict-repos.yaml
+# - restrict-repos.yaml                 - use the custom SE version
 - restrict-role-secrets.yaml
 - restrict-windows-hostprocess.yaml
 - seccomp.yaml

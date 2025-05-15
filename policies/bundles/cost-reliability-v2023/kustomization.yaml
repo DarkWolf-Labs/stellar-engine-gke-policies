@@ -12,5 +12,5 @@ resources:
 - pod-resources-best-practices.yaml
 - require-pod-disruption-budget.yaml
 - required-labels.yaml
-- restrict-repos.yaml
+#- restrict-repos.yaml - use the custom SE version
 - spotvm-termination-grace.yaml

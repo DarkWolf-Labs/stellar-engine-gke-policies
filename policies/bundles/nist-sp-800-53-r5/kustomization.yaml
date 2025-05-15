@@ -31,7 +31,7 @@ resources:
 # - restrict-repos.yaml                     - use the custom SE version
 # - restrict-role-wildcards.yaml            - use the custom SE version
 - restrict-storageclass.yaml
-- restrict-volume-types.yaml
+#- restrict-volume-types.yaml               - use the custom SE version
 - seccomp.yaml
 - selinux.yaml
 - sysctls.yaml

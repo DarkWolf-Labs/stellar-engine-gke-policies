@@ -39,6 +39,7 @@ spec:
     excludedNamespaces:
       - kube-system
       - gke-system
+      - clamav
   parameters:
     volumes:
       - configMap

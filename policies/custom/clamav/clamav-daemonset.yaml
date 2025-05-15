@@ -127,6 +127,8 @@ spec:
         - name: clamav-config-volume
           mountPath: /etc/clamav/clamd.conf
           subPath: clamd.conf
+        - name: clamd-tmp
+          mountPath: /tmp
         resources:
           requests:
             cpu: "200m"
@@ -150,3 +152,5 @@ spec:
           name: clamav-config
           optional: false
           defaultMode: 0444
+      - name: clamd-tmp
+        emptyDir: {}

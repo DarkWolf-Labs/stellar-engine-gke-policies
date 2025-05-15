@@ -87,7 +87,7 @@ spec:
         ds := data.inventory.cluster["apps/v1"]["DaemonSet"][required_ds_info.namespace][required_ds_info.name]
         count(ds) > 0
         _node_selector_check_passes(ds, params)
-        and ds.status.numberReady == ds.status.desiredNumberScheduled # Strict check: all desired pods are ready
+        ds.status.numberReady == ds.status.desiredNumberScheduled # Strict check
       }
 
       # Helper for nodeSelector check when restrict_ns is true

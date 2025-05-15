@@ -21,7 +21,7 @@ resources:
 - nodes-have-consistent-time.yaml
 # - privileged-containers.yaml              - use the custom SE version
 - proc-mount-type.yaml
-- require-av-daemonset.yaml
+#- require-av-daemonset.yaml                - use the custom SE version
 - require-binauthz.yaml
 - require-managed-by-label.yaml
 # - require-namespace-network-policies.yaml - use the custom SE version

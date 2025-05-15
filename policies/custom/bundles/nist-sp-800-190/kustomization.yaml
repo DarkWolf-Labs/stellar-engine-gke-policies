@@ -12,4 +12,5 @@ resources:
 - se-privileged-containers.yaml
 - se-require-namespace-network-policies.yaml
 - se-restrict-hostpath-volumes.yaml
+- se-restrict-repos.yaml
 - se-restrict-role-wildcards.yaml

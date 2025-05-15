@@ -45,6 +45,7 @@ spec:
       - gke-connect
       - apigee
       - apigee-system
+      - gmp-system 
   parameters:
     repos:
       - gcr.io/gke-release/

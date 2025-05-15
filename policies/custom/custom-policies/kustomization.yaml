@@ -11,4 +11,5 @@ kind: Kustomization
 resources:
 - no-owner-reference-template.yaml
 - no-owner-reference.yaml
-- sek8srequirenamespacenetworkpolicies.yaml
+- se-k8srequiredaemonsets.yaml
+- se-k8srequirenamespacenetworkpolicies.yaml

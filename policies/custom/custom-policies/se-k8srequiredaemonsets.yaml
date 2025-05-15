@@ -53,58 +53,58 @@ spec:
   - rego: |
       package k8srequiredaemonsets
 
+      # Violation if DaemonSet's namespace doesn't exist
       violation[{"msg": msg}] {
-        input.review.kind.kind == "Namespace"
-        input.review.object.metadata.name == "default" # Optimization: run this global check once per audit
-      
-        required := input.parameters.requiredDaemonsets[_]
-        not _namespace_exists(required.namespace)
-        msg := sprintf("Namespace <%v> (for required daemonset <%v>) does not exist", [required.namespace, required.name])
+          input.review.kind.kind == "Namespace"
+          input.review.object.metadata.name == "default" # Optimization: run this global check once per audit
+
+          required := input.parameters.requiredDaemonsets[_]
+          not _namespace_exists(required.namespace)
+          msg := sprintf("Namespace <%v> (for required daemonset <%v>) does not exist", [required.namespace, required.name])
       }
-      
+
+      # Violation if DaemonSet not found or fails nodeSelector check
       violation[{"msg": msg}] {
-        input.review.kind.kind == "Namespace"
-        ns_under_review := input.review.object.metadata.name
-      
-        required := input.parameters.requiredDaemonsets[_]
-        ns_under_review == required.namespace # Focus on the relevant namespace for this required daemonset
-      
-        # Only proceed if the namespace is known to exist (prevents duplicate errors from above)
-        _namespace_exists(required.namespace)
-      
-        not _daemonset_is_compliant(required, input.parameters)
-        msg := sprintf("Namespace <%v> does not have a compliant required daemonset: <%v>", [required.namespace, required.name])
+          input.review.kind.kind == "Namespace"
+          current_ns_being_reviewed := input.review.object.metadata.name
+
+          required := input.parameters.requiredDaemonsets[_]
+          current_ns_being_reviewed == required.namespace # Focus on the relevant namespace
+
+          _namespace_exists(required.namespace) # Only proceed if namespace exists
+
+          not _daemonset_is_compliant(required, input.parameters)
+          msg := sprintf("Namespace <%v> does not have a compliant required daemonset: <%v>", [required.namespace, required.name])
       }
-      
+
       # Helper: Check if namespace exists
       _namespace_exists(ns_name) {
         data.inventory.cluster["v1"]["Namespace"][ns_name]
       }
-      
-      # Helper: Check if the daemonset exists and is compliant with restrictNodeSelector
+
+      # Helper: Check if the daemonset exists and is compliant
       _daemonset_is_compliant(required_ds_info, params) {
         ds := data.inventory.cluster["apps/v1"]["DaemonSet"][required_ds_info.namespace][required_ds_info.name]
-      
-        # Check 1: DaemonSet must exist
-        count(ds) > 0 # True if ds object exists
-      
-        # Check 2: restrictNodeSelector logic
-        # If restrictNodeSelector is true, the DaemonSet MUST NOT have a nodeSelector.
-        restrict_ns := object.get(params, "restrictNodeSelector", false) # Default to false
-        if restrict_ns == true {
-          not _ds_has_nodeselector(ds)
-        } else {
-          true # If restrictNodeSelector is false, this check passes
-        }
-      
-        # Check 3: DaemonSet should be ready
-        # and ds.status.numberReady > 0
-        # and ds.status.numberReady == ds.status.desiredNumberScheduled
+        count(ds) > 0
+        _node_selector_check_passes(ds, params)
+        and ds.status.numberReady == ds.status.desiredNumberScheduled # Strict check: all desired pods are ready
       }
-      
+
+      # Helper for nodeSelector check when restrict_ns is true
+      _node_selector_check_passes(ds, params) {
+        restrict_ns := object.get(params, "restrictNodeSelector", false)
+        restrict_ns == true
+        not _ds_has_nodeselector(ds) # If restriction is on, daemonset must NOT have a nodeSelector
+      }
+
+      # Helper for nodeSelector check when restrict_ns is false (this rule provides the "else true" logic)
+      _node_selector_check_passes(ds, params) {
+        restrict_ns := object.get(params, "restrictNodeSelector", false)
+        restrict_ns == false # If restriction is off, this check passes
+      }
+
       # Helper: Check if a DaemonSet spec has a nodeSelector defined
       _ds_has_nodeselector(ds) {
-        # True if ds.spec.template.spec.nodeSelector exists and is not an empty map
         count(object.get(ds.spec.template.spec, "nodeSelector", {})) > 0
       }
     target: admission.k8s.gatekeeper.sh

@@ -14,3 +14,4 @@ resources:
 - se-restrict-hostpath-volumes.yaml
 - se-restrict-repos.yaml
 - se-restrict-role-wildcards.yaml
+- se-restrict-volume-types.yaml

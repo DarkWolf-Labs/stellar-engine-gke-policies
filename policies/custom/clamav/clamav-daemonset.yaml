@@ -32,7 +32,6 @@ spec:
         securityContext:
           runAsUser: 101
           runAsGroup: 102
-          fsGroup: 102
           runAsNonRoot: true
           capabilities:
             drop:
@@ -82,7 +81,6 @@ spec:
         securityContext:
           runAsUser: 101
           runAsGroup: 102
-          fsGroup: 102
           runAsNonRoot: true
           # IMPORTANT: To scan the host filesystem, clamd usually needs elevated privileges.
           privileged: true

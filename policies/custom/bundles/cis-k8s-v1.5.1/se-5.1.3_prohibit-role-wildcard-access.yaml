@@ -48,6 +48,9 @@ spec:
           - Role
   parameters:
     exemptions:
+      roles:
+        - name: gke-spiffe-leaderelection
+          namespace: kube-system
       clusterRoles:
         - name: config-management-operator
         - name: configsync.gke.io:ns-reconciler

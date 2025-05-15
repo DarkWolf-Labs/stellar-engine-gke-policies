@@ -18,7 +18,7 @@ resources:
 - host-namespaces.yaml
 - host-network.yaml
 - hostport.yaml
-- privilege-escalation.yaml
+#- privilege-escalation.yaml               - use the custom SE version
 #- privileged-containers.yaml              - use the custom SE version
 - readonlyrootfilesystem.yaml
 #- require-namespace-network-policies.yaml - use the custom SE version

@@ -7,13 +7,13 @@ metadata:
       "[
         [
           {
-            "groups": ["extensions"],
-            "versions": ["v1beta1"],
+            "groups": ["apps"],
+            "versions": ["v1beta2", "v1"],
             "kinds": ["DaemonSet"]
           },
           {
-            "groups": ["apps"],
-            "versions": ["v1beta2", "v1"],
+            "groups": ["extensions"],
+            "versions": ["v1beta1"],
             "kinds": ["DaemonSet"]
           },
           {

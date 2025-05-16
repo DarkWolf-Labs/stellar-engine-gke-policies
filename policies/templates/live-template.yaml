@@ -2,6 +2,16 @@ apiVersion: templates.gatekeeper.sh/v1
 kind: ConstraintTemplate
 metadata:
   annotations:
+    config.k8s.io/owning-inventory: config-management-system_root-sync
+    config.kubernetes.io/origin: |
+      path: templates/k8sstorageclass.yaml
+    configmanagement.gke.io/cluster-name: il5ssaa-test-ss1-cluster
+    configmanagement.gke.io/managed: enabled
+    configmanagement.gke.io/source-path: policies/default_templates.gatekeeper.sh_v1_constrainttemplate_k8sstorageclass.yaml
+    configmanagement.gke.io/token: e8a3d01bfd185e9d58e77989eabc1d240fa1f1de
+    configsync.gke.io/git-context: '{"repo":"https://github.com/DarkWolf-Labs/stellar-engine-gke-policies","branch":"gitops-constraints","rev":"HEAD"}'
+    configsync.gke.io/manager: :root
+    configsync.gke.io/resource-id: templates.gatekeeper.sh_constrainttemplate_k8sstorageclass
     description: Requires storage classes to be specified when used. Only Gatekeeper
       3.9+ and non-ephemeral containers are supported.
     metadata.gatekeeper.sh/requires-sync-data: |
@@ -16,10 +26,17 @@ metadata:
       ]"
     metadata.gatekeeper.sh/title: Storage Class
     metadata.gatekeeper.sh/version: 1.1.2
-    policycontroller.configmanagement.gke.io/version: "1.20.3"
+    policycontroller.configmanagement.gke.io/version: 1.20.3
+  creationTimestamp: "2025-05-16T12:54:35Z"
+  generation: 1
   labels:
+    app.kubernetes.io/managed-by: configmanagement.gke.io
+    applyset.kubernetes.io/part-of: applyset-e22zDPwKdkFqCzUzScEvOv2nZZ55DLNRI-wrMTICH94-v1
+    configsync.gke.io/declared-version: v1
     policycontroller.configmanagement.gke.io/referential: "true"
   name: k8sstorageclass
+  resourceVersion: "1747409082300015005"
+  uid: 3e4289a1-a7fe-497b-af9b-530fea989107
 spec:
   crd:
     spec:
@@ -156,3 +173,17 @@ spec:
         []
       )
     target: admission.k8s.gatekeeper.sh
+status:
+  byPod:
+  - id: gatekeeper-audit-6b675f5464-424pj
+    observedGeneration: 1
+    operations:
+    - audit
+    - status
+    templateUID: 3e4289a1-a7fe-497b-af9b-530fea989107
+  - id: gatekeeper-controller-manager-5cbccc8474-bj7bq
+    observedGeneration: 1
+    operations:
+    - webhook
+    templateUID: 3e4289a1-a7fe-497b-af9b-530fea989107
+  created: true

@@ -11,7 +11,7 @@ kind: Kustomization
 resources:
 - apparmor.yaml
 - block-all-ingress.yaml
-- cronjob-restrict-repos.yaml
+#- cronjob-restrict-repos.yaml          - use the custom SE version
 - disallow-anonymous.yaml
 - host-namespaces-host-pid-ipc.yaml
 - host-namespaces-hostnetwork.yaml

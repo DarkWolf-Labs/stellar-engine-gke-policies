@@ -45,6 +45,7 @@ spec:
       - gke-connect
       - apigee
       - apigee-system
+      - gmp-system 
   parameters:
     repos:
       - gcr.io/gke-release/
@@ -56,3 +57,4 @@ spec:
       - gcr.io/gkeconnect/
       - gke.gcr.io/
       - artifactregistry.gcr.io/gke-release/
+      - clamav/

@@ -72,10 +72,10 @@ spec:
         resources:
           requests:
             cpu: "100m"
-            memory: "512Mi"
+            memory: "1Gi"
           limits:
             cpu: "500m"
-            memory: "1Gi"
+            memory: "2Gi"
       - name: clamd
         image: clamav/clamav:1.3.0
         securityContext:
@@ -132,7 +132,7 @@ spec:
         resources:
           requests:
             cpu: "200m"
-            memory: "1Gi" # clamd can be memory intensive during scans
+            memory: "2Gi" # clamd can be memory intensive during scans
           limits:
             cpu: "1"
             memory: "2Gi"

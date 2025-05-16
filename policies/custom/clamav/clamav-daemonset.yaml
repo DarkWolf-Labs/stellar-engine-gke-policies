@@ -4,12 +4,11 @@ kind: DaemonSet
 metadata:
   name: clamav
   namespace: clamav
-  annotations:
-    network-controls/date: "2025-05-16"
   labels:
     app: clamav
     environment: security-tool
-    team: security-ops  
+    team: security-ops
+    pci-dss-firewall-audit: "2025q2"
 spec:
   selector:
     matchLabels:
@@ -21,7 +20,8 @@ spec:
       labels:
         app: clamav
         environment: security-tool
-        team: security-ops  
+        team: security-ops
+        pci-dss-firewall-audit: "2025q2"
     spec:
       securityContext:
         runAsNonRoot: true

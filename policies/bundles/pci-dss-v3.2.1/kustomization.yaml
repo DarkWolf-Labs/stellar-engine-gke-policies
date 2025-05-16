@@ -18,6 +18,6 @@ resources:
 - 2.1_restrict-default-namespace.yaml
 - 4.1_asm-peer-authn-strict-mtls.yaml
 #- 5.1.1_5.3-require-av-daemonset.yaml         - use the custom SE version
-- 5.3_6.1_6.4_enforce-config-management.yaml
+#- 5.3_6.1_6.4_enforce-config-management.yaml  - use the custom SE version
 - 6.5_6.6_enforce-cloudarmor-backendconfig.yaml
 - 8.1.5_8.2.3_8.5_block-secrets-of-type-basic-auth.yaml

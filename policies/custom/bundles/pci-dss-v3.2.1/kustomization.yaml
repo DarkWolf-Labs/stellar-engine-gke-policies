@@ -11,3 +11,4 @@ kind: Kustomization
 resources:
 - se-1.2_require-namespace-network-policies.yaml
 - se-5.1.1_5.3-require-av-daemonset.yaml
+- se-5.3_6.1_6.4_enforce-config-management.yaml

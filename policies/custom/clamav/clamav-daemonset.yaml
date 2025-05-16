@@ -4,6 +4,8 @@ kind: DaemonSet
 metadata:
   name: clamav
   namespace: clamav
+  annotations:
+    network-controls/date: "2025-05-16"
   labels:
     app: clamav
     environment: security-tool

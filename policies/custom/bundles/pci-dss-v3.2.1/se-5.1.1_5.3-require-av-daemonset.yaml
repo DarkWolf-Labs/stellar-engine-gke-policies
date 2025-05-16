@@ -39,4 +39,4 @@ spec:
   parameters:
     requiredDaemonsets:
       - name: clamav
-        namespace: pci-dss-av
+        namespace: clamav

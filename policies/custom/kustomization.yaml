@@ -12,5 +12,5 @@ resources:
 - bundles
 - clamav
 - custom-policies
-- debug
+#- debug
 - network

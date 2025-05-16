@@ -1,0 +1,42 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: debuglistnamespaces
+  annotations:
+    description: "Lists namespaces found in Gatekeeper inventory for debugging."
+    metadata.gatekeeper.sh/requires-sync-data: |
+      "[
+        [
+          {
+            "groups": [""],
+            "versions": ["v1"],
+            "kinds": ["Namespace"]
+          }
+        ]
+      ]"
+spec:
+  crd:
+    spec:
+      names:
+        kind: DebugListNamespaces
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package debuglistnamespaces
+
+        violation[{"msg": msg}] {
+          all_namespaces := [ns_name | data.inventory.cluster["v1"].Namespace[ns_name]]
+          ns_count := count(all_namespaces)
+          count(data.inventory.cluster["v1"].Namespace) > 0 # Condition for this message path
+          msg := sprintf("DEBUG: Found %v namespaces. Names: %v. ClamAV namespace present: %v", [
+            ns_count,
+            all_namespaces,
+            data.inventory.cluster["v1"].Namespace["clamav"] # Check specifically for clamav
+          ])
+        }
+
+        violation[{"msg": msg}] {
+          # This rule triggers if NO namespaces are synced at all
+          not data.inventory.cluster["v1"].Namespace
+          msg := "DEBUG: No Namespace data found in inventory at all."
+        }

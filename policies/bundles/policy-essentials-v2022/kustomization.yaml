@@ -17,7 +17,7 @@ kind: Kustomization
 resources:
 - no-secrets-as-env-vars.yaml
 - pods-require-security-context.yaml
-- prohibit-role-wildcard-access.yaml
+#- prohibit-role-wildcard-access.yaml            - use the custom SE version
 #- psp-allow-privilege-escalation-container.yaml - use the custom SE version
 - psp-capabilities.yaml
 - psp-host-namespace.yaml

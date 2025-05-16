@@ -12,4 +12,5 @@ resources:
 - se-require-av-daemonset.yaml
 - se-require-namespace-network-policies.yaml
 - se-restrict-cluster-admin-role.yaml
+- se-restrict-rbac-subjects.yaml
 - se-restrict-role-wildcards.yaml

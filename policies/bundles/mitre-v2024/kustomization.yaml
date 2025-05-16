@@ -28,8 +28,8 @@ resources:
 #- restrict-hostpath-volumes.yaml       - use the custom SE version
 - restrict-kubernetes-dashboard-namespace.yaml
 - restrict-pods-exec.yaml
-- restrict-rbac-subjects.yaml
-# - restrict-repos.yaml                 - use the custom SE version
+#- restrict-rbac-subjects.yaml          - use the custom SE version
+#- restrict-repos.yaml                  - use the custom SE version
 - restrict-role-secrets.yaml
 - restrict-windows-hostprocess.yaml
 - seccomp.yaml

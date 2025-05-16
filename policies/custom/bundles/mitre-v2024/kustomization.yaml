@@ -13,4 +13,5 @@ resources:
 - se-require-namespace-networkpolicy.yaml
 - se-restrict-cluster-admin-role.yaml
 - se-restrict-hostpath-volumes.yaml
+- se-restrict-rbac-subjects.yaml
 - se-restrict-repos.yaml

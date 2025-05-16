@@ -13,4 +13,5 @@ resources:
 - se-privileged-containers.yaml
 - se-require-namespace-networkpolicy.yaml
 - se-restrict-cluster-admin-role.yaml
+- se-restrict-rbac-subjects.yaml
 - se-restrict-role-wildcards.yaml

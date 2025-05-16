@@ -37,7 +37,7 @@ resources:
 - restrict-nodes-proxy.yaml
 - restrict-persistent-volume.yaml
 - restrict-pods-create.yaml
-- restrict-rbac-subjects.yaml
+#- restrict-rbac-subjects.yaml                     - use the custom SE version
 - restrict-role-secrets.yaml
 # - restrict-role-wildcards.yaml                   - use the custom SE version
 - restrict-secrets-of-type-basic-auth.yaml

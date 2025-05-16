@@ -26,7 +26,7 @@ resources:
 #- require-namespace-network-policies.yaml - use the custom SE version
 #- restrict-clusteradmin-rolebindings.yaml - use the custom SE version
 #- restrict-hostpath-volumes.yaml          - use the custom SE version
-- restrict-rbac-subjects.yaml
+#- restrict-rbac-subjects.yaml             - use the custom SE version
 #- restrict-repos.yaml                     - use the custom SE version
 #- restrict-role-wildcards.yaml            - use the custom SE version
 #- restrict-volume-types.yaml              - use the custom SE version

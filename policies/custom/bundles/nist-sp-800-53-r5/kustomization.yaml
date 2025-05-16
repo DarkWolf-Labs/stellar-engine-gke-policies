@@ -11,8 +11,9 @@ kind: Kustomization
 resources:
 - se-privileged-containers.yaml
 - se-require-namespace-network-policies.yaml
-- se-restrict-clusteradmin-rolebindings.yaml
+#- se-restrict-clusteradmin-rolebindings.yaml
 - se-restrict-hostpath-volumes.yaml
+- se-restrict-rbac-subjects.yaml
 - se-restrict-repos.yaml
 - se-restrict-role-wildcards.yaml
 - se-restrict-volume-types.yaml

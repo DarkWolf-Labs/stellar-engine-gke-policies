@@ -9,6 +9,7 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
+- se-1.2.2_8.1.2_enforce-managed-by-configmanagement-label.yaml
 - se-1.2_require-namespace-network-policies.yaml
 - se-5.1.1_5.3-require-av-daemonset.yaml
 - se-5.3_6.1_6.4_enforce-config-management.yaml

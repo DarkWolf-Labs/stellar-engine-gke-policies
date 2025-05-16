@@ -30,7 +30,7 @@ resources:
 - restrict-pods-exec.yaml
 #- restrict-rbac-subjects.yaml          - use the custom SE version
 #- restrict-repos.yaml                  - use the custom SE version
-- restrict-role-secrets.yaml
+#- restrict-role-secrets.yaml           - use the custom SE version
 - restrict-windows-hostprocess.yaml
 - seccomp.yaml
 - selinux.yaml

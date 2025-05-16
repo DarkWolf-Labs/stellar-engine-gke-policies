@@ -38,10 +38,10 @@ resources:
 - restrict-persistent-volume.yaml
 - restrict-pods-create.yaml
 #- restrict-rbac-subjects.yaml                     - use the custom SE version
-- restrict-role-secrets.yaml
+#- restrict-role-secrets.yaml                      - use the custom SE version
 # - restrict-role-wildcards.yaml                   - use the custom SE version
 - restrict-secrets-of-type-basic-auth.yaml
-- restrict-serviceaccounts-token.yaml
+#- restrict-serviceaccounts-token.yaml             - use the custom SE version
 - restrict-system-masters-group.yaml
 - restrict-webhook-config.yaml
 - seccomp.yaml

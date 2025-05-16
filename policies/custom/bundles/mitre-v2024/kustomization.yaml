@@ -12,7 +12,9 @@ resources:
 - se-cronjob-restrict-repos.yaml
 - se-privileged-containers.yaml
 - se-require-namespace-networkpolicy.yaml
+- se-restrict-admission-controller.yaml
 - se-restrict-cluster-admin-role.yaml
 - se-restrict-hostpath-volumes.yaml
 - se-restrict-rbac-subjects.yaml
 - se-restrict-repos.yaml
+- se-restrict-role-secrets.yaml

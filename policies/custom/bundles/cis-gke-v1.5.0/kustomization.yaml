@@ -14,4 +14,6 @@ resources:
 - se-require-namespace-networkpolicy.yaml
 - se-restrict-cluster-admin-role.yaml
 - se-restrict-rbac-subjects.yaml
+- se-restrict-role-secrets.yaml
 - se-restrict-role-wildcards.yaml
+- se-restrict-serviceaccounts-token.yaml

@@ -9,6 +9,7 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
+- authorization-policy-istio.yaml
 - network-policy-default.yaml
 - network-policy-gke-managed-system.yaml
 - network-policy-gke-managed-volumepopulator.yaml

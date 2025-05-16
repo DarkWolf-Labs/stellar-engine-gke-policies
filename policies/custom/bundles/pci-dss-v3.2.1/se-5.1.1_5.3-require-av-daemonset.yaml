@@ -40,3 +40,4 @@ spec:
     requiredDaemonsets:
       - name: clamav
         namespace: clamav
+    restrictNodeSelector: false

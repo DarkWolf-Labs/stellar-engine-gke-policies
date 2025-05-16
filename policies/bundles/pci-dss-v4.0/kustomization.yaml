@@ -20,7 +20,7 @@ resources:
 - require-peer-authentication-strict-mtls.yaml
 - require-valid-network-ranges.yaml
 - resources-have-required-labels.yaml
-- restrict-cluster-admin-role.yaml
+#- restrict-cluster-admin-role.yaml        - use the custom SE version
 - restrict-creation-with-default-serviceaccount.yaml
 - restrict-default-namespace.yaml
 - restrict-ingress.yaml

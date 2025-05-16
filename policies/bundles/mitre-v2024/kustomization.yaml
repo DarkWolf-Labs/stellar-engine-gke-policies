@@ -24,7 +24,7 @@ resources:
 - restrict-admission-controller.yaml
 - restrict-automountserviceaccounttoken.yaml
 - restrict-capabilities.yaml
-- restrict-cluster-admin-role.yaml
+#- restrict-cluster-admin-role.yaml     - use the custom SE version
 #- restrict-hostpath-volumes.yaml       - use the custom SE version
 - restrict-kubernetes-dashboard-namespace.yaml
 - restrict-pods-exec.yaml

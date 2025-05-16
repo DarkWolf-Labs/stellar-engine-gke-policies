@@ -14,22 +14,22 @@ resources:
 - host-namespace.yaml
 - host-port.yaml
 - host_namespaces_hostnetwork.yaml
-#- hostpath-volumes.yaml - use the custom SE version
+#- hostpath-volumes.yaml                           - use the custom SE version
 - hostprocess.yaml
-#- privileged-containers.yaml - use the custom SE version
+#- privileged-containers.yaml                      - use the custom SE version
 - proc_mount_type.yaml
 - require-binauthz.yaml
 - require-cos-node-image.yaml
 - require-gke-metadata-server-enabled.yaml
 - require-ingress.class-gce.yaml
 - require-managed-certificates.yaml
-#- require-namespace-networkpolicy.yaml - use the custom SE version
+#- require-namespace-networkpolicy.yaml            - use the custom SE version
 - require-seccomp-default.yaml
 - require-securitycontext.yaml
 - restrict-automountserviceaccounttoken.yaml
 - restrict-bind-escalate-impersonate.yaml
 - restrict-certificatesigningrequests-approval.yaml
-- restrict-cluster-admin-role.yaml
+#- restrict-cluster-admin-role.yaml                - use the custom SE version
 - restrict-creation-with-default-serviceaccount.yaml
 - restrict-default-namespace.yaml
 - restrict-env-var-secrets.yaml
@@ -39,7 +39,7 @@ resources:
 - restrict-pods-create.yaml
 - restrict-rbac-subjects.yaml
 - restrict-role-secrets.yaml
-# - restrict-role-wildcards.yaml - use the custom SE version
+# - restrict-role-wildcards.yaml                   - use the custom SE version
 - restrict-secrets-of-type-basic-auth.yaml
 - restrict-serviceaccounts-token.yaml
 - restrict-system-masters-group.yaml

@@ -13,5 +13,6 @@ resources:
 - crd-authorization-policy.yaml
 - no-owner-reference-template.yaml
 - no-owner-reference.yaml
+- peer-authentication-istio.yaml
 - se-k8srequiredaemonsets.yaml
 - se-k8srequirenamespacenetworkpolicies.yaml

@@ -21,7 +21,7 @@ resources:
 - nodes-have-consistent-time.yaml
 #- privileged-containers.yaml              - use the custom SE version
 - proc-mount-type.yaml
-- require-binauthz.yaml
+#- require-binauthz.yaml                   - not disa compliant for il5
 - require-managed-by-label.yaml
 #- require-namespace-network-policies.yaml - use the custom SE version
 #- restrict-clusteradmin-rolebindings.yaml - use the custom SE version

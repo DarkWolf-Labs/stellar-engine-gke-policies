@@ -19,7 +19,7 @@ resources:
 - no-secrets-as-env-vars.yaml
 #- privileged-containers.yaml           - use the custom SE version
 - proc-mount-type.yaml
-- require-binauthz.yaml
+#- require-binauthz.yaml                - not disa compliant for il5
 #- require-namespace-networkpolicy.yaml - use the custom SE version
 - restrict-admission-controller.yaml
 - restrict-automountserviceaccounttoken.yaml

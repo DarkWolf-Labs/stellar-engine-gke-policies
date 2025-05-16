@@ -18,7 +18,7 @@ resources:
 - hostprocess.yaml
 #- privileged-containers.yaml                      - use the custom SE version
 - proc_mount_type.yaml
-- require-binauthz.yaml
+#- require-binauthz.yaml                           - not disa compliant for il5
 - require-cos-node-image.yaml
 - require-gke-metadata-server-enabled.yaml
 - require-ingress.class-gce.yaml

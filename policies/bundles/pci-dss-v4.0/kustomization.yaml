@@ -11,7 +11,7 @@ kind: Kustomization
 resources:
 - require-apps-annotations.yaml
 #- require-av-daemonset.yaml               - use the custom SE version
-- require-binauthz.yaml
+#- require-binauthz.yaml                   - not disa compliant for il5
 - require-cloudarmor-backendconfig.yaml
 - require-config-management.yaml
 - require-default-deny-network-policies.yaml

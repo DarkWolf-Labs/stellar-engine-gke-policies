@@ -15,6 +15,11 @@ metadata:
             "groups": ["apps"],
             "versions": ["v1beta2", "v1"],
             "kinds": ["DaemonSet"]
+          },
+          {
+            "groups": [""],
+            "versions": ["v1"],
+            "kinds": ["Namespace"]
           }
         ]
       ]"

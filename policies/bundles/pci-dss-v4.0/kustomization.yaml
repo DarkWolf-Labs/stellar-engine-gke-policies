@@ -10,7 +10,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
 - require-apps-annotations.yaml
-#- require-av-daemonset.yaml               - use the custom SE version
+- require-av-daemonset.yaml
 #- require-binauthz.yaml                   - not disa compliant for il5
 - require-cloudarmor-backendconfig.yaml
 - require-config-management.yaml

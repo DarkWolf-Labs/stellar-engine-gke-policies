@@ -3,4 +3,6 @@ kind: AuthorizationPolicy
 metadata:
   name: default-deny-all
   namespace: istio-system
-spec: {} 
+spec:
+  mtls:
+    mode: STRICT

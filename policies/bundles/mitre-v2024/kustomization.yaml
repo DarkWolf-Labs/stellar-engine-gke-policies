@@ -21,7 +21,7 @@ resources:
 - proc-mount-type.yaml
 #- require-binauthz.yaml                - not disa compliant for il5
 #- require-namespace-networkpolicy.yaml - use the custom SE version
-- restrict-admission-controller.yaml
+#- restrict-admission-controller.yaml   - use the custom SE version
 - restrict-automountserviceaccounttoken.yaml
 - restrict-capabilities.yaml
 #- restrict-cluster-admin-role.yaml     - use the custom SE version

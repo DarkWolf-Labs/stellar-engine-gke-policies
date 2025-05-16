@@ -36,6 +36,16 @@ spec:
           - ""
         kinds:
           - Pod
+    excludedNamespaces:
+      - kube-system
+      - cert-manager
+      - gke-managed-metrics-server
+      - anthos-identity-service
+      - gke-system
+      - gke-connect
+      - apigee
+      - apigee-system
+      - gmp-system 
   parameters:
     repos:
       # Example to add your Artifact Registry

@@ -10,6 +10,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
 - se-require-av-daemonset.yaml
+- se-require-default-deny-network-policies.yaml
 - se-require-namespace-network-policies.yaml
 - se-restrict-cluster-admin-role.yaml
 - se-restrict-rbac-subjects.yaml

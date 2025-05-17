@@ -10,22 +10,22 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
 - require-apps-annotations.yaml
-#- require-av-daemonset.yaml               - use the custom SE version
-#- require-binauthz.yaml                   - not disa compliant for il5
+#- require-av-daemonset.yaml                  - use the custom SE version
+#- require-binauthz.yaml                      - not disa compliant for il5
 - require-cloudarmor-backendconfig.yaml
 - require-config-management.yaml
-- require-default-deny-network-policies.yaml
+#- require-default-deny-network-policies.yaml - use the custom SE version
 - require-managed-by-label.yaml
-#- require-namespace-network-policies.yaml - use the custom SE version
+#- require-namespace-network-policies.yaml    - use the custom SE version
 - require-peer-authentication-strict-mtls.yaml
 - require-valid-network-ranges.yaml
 - resources-have-required-labels.yaml
-#- restrict-cluster-admin-role.yaml        - use the custom SE version
+#- restrict-cluster-admin-role.yaml           - use the custom SE version
 - restrict-creation-with-default-serviceaccount.yaml
 - restrict-default-namespace.yaml
 - restrict-ingress.yaml
 - restrict-node-image.yaml
 - restrict-pods-exec.yaml
-#- restrict-rbac-subjects.yaml             - use the custom SE version
-#- restrict-role-wildcards.yaml            - use the custom SE version
+#- restrict-rbac-subjects.yaml                - use the custom SE version
+#- restrict-role-wildcards.yaml               - use the custom SE version
 - restrict-storageclass.yaml

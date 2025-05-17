@@ -35,7 +35,7 @@ resources:
 - restrict-env-var-secrets.yaml
 - restrict-loadbalancer.yaml
 - restrict-nodes-proxy.yaml
-- restrict-persistent-volume.yaml
+#- restrict-persistent-volume.yaml                 - use the custom SE version
 - restrict-pods-create.yaml
 #- restrict-rbac-subjects.yaml                     - use the custom SE version
 #- restrict-role-secrets.yaml                      - use the custom SE version

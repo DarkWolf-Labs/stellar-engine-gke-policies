@@ -1,0 +1,42 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: debugliststorageclasses
+  annotations:
+    description: "Lists StorageClasses found in Gatekeeper inventory for debugging."
+    metadata.gatekeeper.sh/requires-sync-data: |
+      "[
+        [
+          {
+            "groups": ["storage.k8s.io"],
+            "versions": ["v1"],
+            "kinds": ["StorageClass"]
+          }
+        ]
+      ]"
+spec:
+  crd:
+    spec:
+      names:
+        kind: DebugListStorageClasses
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package debugliststorageclasses
+
+        violation[{"msg": msg}] {
+          # This rule triggers if NO StorageClasses are synced at all
+          not data.inventory.cluster["storage.k8s.io/v1"].StorageClass
+          msg := "DEBUG_STORAGECLASS: No StorageClass data path found in inventory at all."
+        }
+
+        violation[{"msg": msg}] {
+          # This rule triggers if the path exists but might be empty, or to list them
+          all_scs := [sc_name | data.inventory.cluster["storage.k8s.io/v1"].StorageClass[sc_name]]
+          sc_count := count(all_scs)
+          # Always violate to show the message, adjust condition if needed
+          msg := sprintf("DEBUG_STORAGECLASS: Found %v StorageClasses. Names: %v", [
+            sc_count,
+            all_scs
+          ])
+        }

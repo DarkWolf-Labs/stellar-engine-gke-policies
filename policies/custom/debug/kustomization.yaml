@@ -11,3 +11,5 @@ kind: Kustomization
 resources:
 - debug-namespace-constraint.yaml
 - debug-namespace-template.yaml
+- debug-storageclasses-constraint.yaml
+- debug-storageclasses-template.yaml

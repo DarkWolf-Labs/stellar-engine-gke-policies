@@ -7,7 +7,7 @@
 # cluster” is defined as “A Cluster (of any kind) registered to a fleet project
 # where the Anthos API is enabled”.
 apiVersion: constraints.gatekeeper.sh/v1beta1
-kind: K8sRequireDefaultDenyEgressPolicy
+kind: SEK8sRequireDefaultDenyEgressPolicy
 metadata:
   name: pci-dss-v3.2.1-extended-require-default-deny-network-policies
   labels:

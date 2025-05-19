@@ -23,17 +23,17 @@ metadata:
     metadata.gatekeeper.sh/version: 1.0.3
   labels:
     policycontroller.configmanagement.gke.io/referential: "true"
-  name: k8srequiredefaultdenyegresspolicy
+  name: sek8srequiredefaultdenyegresspolicy
 spec:
   crd:
     spec:
       names:
-        kind: K8sRequireDefaultDenyEgressPolicy
+        kind: SEK8sRequireDefaultDenyEgressPolicy
       validation:
         legacySchema: false
   targets:
   - rego: |
-      package k8srequiredefaultdenyegresspolicy
+      package sek8srequiredefaultdenyegresspolicy
 
       violation[{"msg": msg}] {
         input.review.kind.kind == "Namespace"

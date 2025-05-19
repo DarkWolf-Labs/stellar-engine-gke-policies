@@ -10,7 +10,6 @@ metadata:
     app: clamav
     environment: security-tool
     team: security-ops
-    network-controls/date: "2025-05-16"
     pci-dss-firewall-audit: "2025q2"
 spec:
   selector:

@@ -1,0 +1,58 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  annotations:
+    description: Requires that every namespace defined in the cluster has a default
+      deny NetworkPolicy for egress.
+    metadata.gatekeeper.sh/requires-sync-data: |
+      "[
+        [
+          {
+            "groups": ["extensions"],
+            "versions": ["v1beta1"],
+            "kinds": ["NetworkPolicy"]
+          },
+          {
+            "groups": ["networking.k8s.io"],
+            "versions": ["v1"],
+            "kinds": ["NetworkPolicy"]
+          }
+        ]
+      ]"
+    metadata.gatekeeper.sh/title: Require Default Deny Egress Policy
+    metadata.gatekeeper.sh/version: 1.0.3
+  labels:
+    policycontroller.configmanagement.gke.io/referential: "true"
+  name: k8srequiredefaultdenyegresspolicy
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sRequireDefaultDenyEgressPolicy
+      validation:
+        legacySchema: false
+  targets:
+  - rego: |
+      package k8srequiredefaultdenyegresspolicy
+
+      violation[{"msg": msg}] {
+        input.review.kind.kind == "Namespace"
+        not found_default_deny_egress_networkpolicy(input.review.object.metadata.name)
+        msg := sprintf("Namespace <%v> does not have a default deny NetworkPolicy for egress", [input.review.object.metadata.name])
+      }
+
+      found_default_deny_egress_networkpolicy(ns) {
+        np := data.inventory.cluster["networking.k8s.io/v1"]["NetworkPolicy"][ns][_]
+        np.spec.podSelector == {}
+        np.spec.policyTypes[_] = "Egress"
+        not_exists_egress_rules(np) #No egress rules
+      }
+
+      not_exists_egress_rules(val) {
+        not val.spec.egress
+      }
+
+      not_exists_egress_rules(val) {
+        count(val.spec.egress) == 0
+      }
+    target: admission.k8s.gatekeeper.sh

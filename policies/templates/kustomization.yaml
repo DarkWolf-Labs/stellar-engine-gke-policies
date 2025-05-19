@@ -75,13 +75,13 @@ resources:
 - k8srequireadmissioncontroller.yaml
 - k8srequirebinauthz.yaml
 - k8srequirecosnodeimage.yaml
-- k8srequiredaemonsets.yaml
+#- k8srequiredaemonsets.yaml               - use the custom SE version
 - k8srequiredannotations.yaml
-- k8srequiredefaultdenyegresspolicy.yaml
+#- k8srequiredefaultdenyegresspolicy.yaml  - use the custom SE version
 - k8srequiredlabels.yaml
 - k8srequiredprobes.yaml
 - k8srequiredresources.yaml
-- k8srequirenamespacenetworkpolicies.yaml
+#- k8srequirenamespacenetworkpolicies.yaml - use the custom SE version
 - k8srequirevalidrangesfornetworks.yaml
 - k8srestrictadmissioncontroller.yaml
 - k8srestrictautomountserviceaccounttokens.yaml

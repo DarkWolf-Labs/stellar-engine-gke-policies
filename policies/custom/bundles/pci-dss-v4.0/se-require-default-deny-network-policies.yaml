@@ -56,4 +56,5 @@ spec:
       - gke-managed-filestorecsi
       - gke-managed-system
       - gke-managed-cim
-      - gke-managed-volumepopulator 
+      - default
+      - gke-managed-volumepopulator

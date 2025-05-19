@@ -12,6 +12,6 @@ resources:
 - bundles
 - clamav
 - constraints
-#- debug
+- debug
 - network
 - templates

@@ -43,16 +43,23 @@ spec:
 
       found_default_deny_egress_networkpolicy(ns) {
         np := data.inventory.cluster["networking.k8s.io/v1"]["NetworkPolicy"][ns][_]
-        np.spec.podSelector == {}
-        np.spec.policyTypes[_] = "Egress"
-        not_exists_egress_rules(np) #No egress rules
+        # Ensure podSelector is empty (selects all pods)
+        # Ensure it's an empty object {} or not present
+        keys := {k | np.spec.podSelector[k]}
+        count(keys) == 0
+      
+        # Ensure policyTypes explicitly includes "Egress"
+        types := {t | t = np.spec.policyTypes[_]}
+        "Egress" in types
+      
+        # Ensure egress rules effectively deny all
+        not_exists_or_is_empty_egress_rules(np)
       }
-
-      not_exists_egress_rules(val) {
+      
+      not_exists_or_is_empty_egress_rules(val) {
         not val.spec.egress
       }
-
-      not_exists_egress_rules(val) {
+      not_exists_or_is_empty_egress_rules(val) {
         count(val.spec.egress) == 0
       }
     target: admission.k8s.gatekeeper.sh

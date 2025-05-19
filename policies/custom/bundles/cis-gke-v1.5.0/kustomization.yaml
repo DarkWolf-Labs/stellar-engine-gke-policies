@@ -12,6 +12,7 @@ resources:
 - se-hostpath-volumes.yaml
 - se-privileged-containers.yaml
 - se-require-namespace-networkpolicy.yaml
+- se-restrict-certificatesigningrequests-approval.yaml
 - se-restrict-cluster-admin-role.yaml
 - se-restrict-persistent-volume.yaml
 - se-restrict-rbac-subjects.yaml

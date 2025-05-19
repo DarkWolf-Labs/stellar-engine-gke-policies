@@ -16,6 +16,11 @@ metadata:
             "groups": ["networking.k8s.io"],
             "versions": ["v1"],
             "kinds": ["NetworkPolicy"]
+          },
+          {
+            "groups": [""],
+            "versions": ["v1"],
+            "kinds": ["Namespace"]
           }
         ]
       ]"

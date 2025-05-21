@@ -8,6 +8,7 @@ This repository provides configuration for the Google Kubernetes Engine (GKE) cl
 The constraints are in DRYRUN mode by default and do not hinder any workflows, but provide warnings to potential security risks.
  - Constraint Templates exported from the cluster with the template library deployed by Policy Controller.
  - Custom constraints and templates created to remediate violations found.
+ - Scripts - helpful tools for interacting with the cluster.
 
 ## Custom Components
 
@@ -30,3 +31,8 @@ There are two pages in the Google Console [GKE page](https://console.cloud.googl
 ### Policy Controller
 
 [Policy Controller](https://console.cloud.google.com/kubernetes/policy_controller) provides a dashboard view of the policies applied to the cluster and any pass/fail results found.  In Violations tab, you can find details on count, affected resource types, and error messages.
+
+## Scripts
+
+The included scripts are provided as tools to export data from the cluster for constraint statuses, and template yaml.
+The scripts should be run from the bastion vm with network access to the cluster.  Output output files can then be downloaded.

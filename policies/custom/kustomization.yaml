@@ -11,7 +11,7 @@ kind: Kustomization
 resources:
 - bundles
 - clamav
-- constraints
 #- debug
 - network
 - templates
+- constraints

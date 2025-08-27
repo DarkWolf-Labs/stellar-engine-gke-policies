@@ -1,0 +1,23 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: gitlab-healthcheck
+  namespace: gitlab-health
+spec:
+  schedule: "*/5 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: healthcheck-runner
+            image: curlimages/curl:8.2.1
+            args:
+            - /bin/sh
+            - -c
+            - |
+              echo "Performing GitLab health check..."
+              curl -s -w "Timestamp: %{time_iso8601}\nStatus Code: %{http_code}\nResponse Body:\n" https://dev.darkwolf.io/-/health
+          restartPolicy: OnFailure
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1

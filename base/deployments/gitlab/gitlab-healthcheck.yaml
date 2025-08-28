@@ -2,19 +2,25 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: gitlab-healthcheck
-  namespace: gitlab-health
+  namespace: gitlab
 spec:
   schedule: "*/5 * * * *"
+  concurrencyPolicy: Forbid
   jobTemplate:
     spec:
+      activeDeadlineSeconds: 60
+      backoffLimit: 3
       template:
         spec:
+          serviceAccountName: healthcheck-sa
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
           containers:
           - name: healthcheck-runner
             image: curlimages/curl:8.2.1
             args:
             - /bin/sh
-            - -c
             - |
               echo "Performing GitLab liveness check at $(date -Iseconds)..."
               
@@ -34,6 +40,13 @@ spec:
                 echo "Liveness check FAILED. Status code: $STATUS_CODE"
                 exit 1 # Exit with a non-zero status to indicate failure
               fi
+            resources:
+              requests:
+                memory: "32Mi"
+                cpu: "25m"
+              limits:
+                memory: "64Mi"
+                cpu: "50m"
           restartPolicy: OnFailure
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 1

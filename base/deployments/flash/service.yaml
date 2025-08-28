@@ -5,7 +5,7 @@ metadata:
   namespace: flash
 spec:
   selector:
-    app: flash-app
+    app: flash
   ports:
   - protocol: TCP
     port: 80

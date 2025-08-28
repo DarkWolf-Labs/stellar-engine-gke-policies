@@ -1,6 +1,6 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: flash
+  name: flash1
   labels:
-    name: flash
+    name: flash1

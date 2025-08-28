@@ -2,7 +2,7 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: gitlab-healthcheck
-  namespace: gitlab
+  namespace: gitlab-healthcheck
 spec:
   schedule: "*/5 * * * *"
   concurrencyPolicy: Forbid

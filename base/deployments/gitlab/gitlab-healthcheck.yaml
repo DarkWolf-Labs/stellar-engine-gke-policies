@@ -19,12 +19,15 @@ spec:
               echo "Performing GitLab liveness check at $(date -Iseconds)..."
               
               # Use a variable for the target URL for easier management
-              TARGET_URL="https://your-gitlab-domain.com/-/liveness"
+              TARGET_URL="https://httphin.org/status/200"
               
               # Run the curl command and capture the HTTP status code.
+              # The -s flag makes the output silent.
+              # The -w flag writes the status code to stdout.
               STATUS_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$TARGET_URL")
 
               # Check the status code and log the result to stdout.
+              # This can then be captured by the cron job's logs in GKE.
               if [ "$STATUS_CODE" -eq 200 ]; then
                 echo "Liveness check SUCCESS. Status code: $STATUS_CODE"
               else

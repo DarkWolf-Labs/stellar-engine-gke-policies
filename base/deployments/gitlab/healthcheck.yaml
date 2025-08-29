@@ -51,5 +51,5 @@ spec:
                 memory: "64Mi"
                 cpu: "50m"
           restartPolicy: OnFailure
-  successfulJobsHistoryLimit: 5
-  failedJobsHistoryLimit: 5
+  successfulJobsHistoryLimit: 15
+  failedJobsHistoryLimit: 15

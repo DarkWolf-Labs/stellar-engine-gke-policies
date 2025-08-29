@@ -37,7 +37,7 @@ spec:
               if [ "$STATUS_CODE" -eq 200 ]; then
                 echo "Liveness check SUCCESS. Status code: $STATUS_CODE"
               else
-                echo "Liveness check FAILED. Status code: $STATUS_CODE"
+                echo "Liveness check FAILED. Status code: $STATUS_CODE" 1>&2
               fi
             resources:
               requests:

@@ -21,6 +21,7 @@ spec:
             image: curlimages/curl:8.2.1
             args:
             - /bin/sh
+            - "-c"
             - |
               echo "Performing GitLab liveness check at $(date -Iseconds)..."
               
@@ -36,8 +37,10 @@ spec:
               # This can then be captured by the cron job's logs in GKE.
               if [ "$STATUS_CODE" -eq 200 ]; then
                 echo "Liveness check SUCCESS. Status code: $STATUS_CODE"
+                exit 0
               else
                 echo "Liveness check FAILED. Status code: $STATUS_CODE" 1>&2
+                exit 1
               fi
             resources:
               requests:

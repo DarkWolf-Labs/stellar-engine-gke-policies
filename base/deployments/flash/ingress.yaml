@@ -5,12 +5,7 @@ metadata:
   namespace: flash1
   annotations:
     kubernetes.io/ingress.class: "gce"
-    # Optional: You can specify a static IP address
-    # kubernetes.io/ingress.global-static-ip-name: "your-static-ip-name"
-    # Optional: Use a Google-managed SSL certificate
-    # networking.gke.io/managed-certificates: "your-certificate-name"
-    # For HTTP to HTTPS redirection:
-    # networking.gke.io/v1beta1.FrontendConfig: "http-to-https"
+    ingress.gke.io/v1beta1.ManagedIngress: "true"
 spec:
   rules:
   - http:

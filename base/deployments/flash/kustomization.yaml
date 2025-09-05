@@ -3,8 +3,8 @@ kind: Kustomization
 
 resources:
 - deployment.yaml
-- frontend.yaml
-- ingress.yaml
+#- frontend.yaml
+#- ingress.yaml
 - namespace.yaml
 #- sa.yaml
-- service.yaml
+#- service.yaml

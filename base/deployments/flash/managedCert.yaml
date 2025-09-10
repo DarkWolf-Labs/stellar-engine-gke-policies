@@ -4,4 +4,5 @@ metadata:
   name: flash-app-certificate
   namespace: flash1
 spec:
-  domain: flash.sclzs1.stellarengine.dev
+  domains: 
+  - flash.sclzs1.stellarengine.dev

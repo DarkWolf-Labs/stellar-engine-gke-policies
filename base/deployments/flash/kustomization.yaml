@@ -5,7 +5,7 @@ resources:
 - deployment.yaml
 - frontend.yaml
 - ingress.yaml
-- managedCert.yaml
+#- managedCert.yaml
 - namespace.yaml
 #- sa.yaml
 - service.yaml

@@ -5,7 +5,7 @@ metadata:
   namespace: flash1
   annotations:
     kubernetes.io/ingress.class: "gce"
-    networking.gke.io/v1beta1.FrontendConfig: "flash-frontend-config"
+    #networking.gke.io/v1beta1.FrontendConfig: "flash-frontend-config"
     #networking.gke.io/managed-certificates: "flash-app-certificate"
 spec:
   rules:
@@ -18,3 +18,4 @@ spec:
             name: flash-service
             port:
               number: 80
+Help me write a deployment plan for an automated process in Google Cloud Function to automate the deactivation of user accounts that have not logged in in the last 30 days. The architecture will include a cloud function running with cloud scheduler on a daily basis. The function will make a list of all users who need to be deactivated that day. The list will be saved as a report and sent to Cloud Storage. The user audit will be done with use of a service account with domain wide delegation in Google Work Space. The cloud function service account will impersonate this service account for Workspace permissions.

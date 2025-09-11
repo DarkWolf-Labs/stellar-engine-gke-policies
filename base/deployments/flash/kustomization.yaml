@@ -3,7 +3,7 @@ kind: Kustomization
 
 resources:
 - deployment.yaml
-- frontend.yaml
+#- frontend.yaml
 - ingress.yaml
 #- managedCert.yaml
 - namespace.yaml

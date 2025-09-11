@@ -4,5 +4,5 @@ metadata:
   name: flash-frontend-config
   namespace: flash1
 spec:
-  redirectToHttps:
-    enabled: true
+  #redirectToHttps:
+    #enabled: true

@@ -18,7 +18,3 @@ spec:
             name: flash-service
             port:
               number: 80
-  tls:
-  - hosts:
-    - flash.sclzs1.stellarengine.dev
-    secretName:

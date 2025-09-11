@@ -4,7 +4,9 @@ kind: Kustomization
 resources:
 - deployment.yaml
 #- frontend.yaml
-- ingress.yaml
+- gateway.yaml
+- httproute.yaml
+#- ingress.yaml
 #- managedCert.yaml
 - namespace.yaml
 #- sa.yaml

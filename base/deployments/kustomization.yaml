@@ -3,4 +3,5 @@ kind: Kustomization
 
 resources:
 - flash
+- flash5
 #- gitlab

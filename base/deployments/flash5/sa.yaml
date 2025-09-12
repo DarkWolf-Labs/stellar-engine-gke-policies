@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: flash-app-service-account
+  namespace: flash5
+  annotations:
+    iam.gke.io/gcp-service-account: "flash-app-service-account@a38-int-aa-main-0.iam.gserviceaccount.com"

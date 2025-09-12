@@ -1,0 +1,8 @@
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: flash-app-certificate
+  namespace: flash5
+spec:
+  domains: 
+  - flash5.sclzs1.stellarengine.dev

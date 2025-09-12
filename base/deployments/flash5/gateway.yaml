@@ -22,4 +22,4 @@ spec:
       mode: Terminate
       certificateRefs:
       - name: flash-tls-secret
-        kind: secret
+        kind: Secret

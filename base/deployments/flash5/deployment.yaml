@@ -24,3 +24,8 @@ spec:
         image: us-east4-docker.pkg.dev/a38-int-aa-main-0/applications/flash-app:latest
         ports:
         - containerPort: 8080
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name

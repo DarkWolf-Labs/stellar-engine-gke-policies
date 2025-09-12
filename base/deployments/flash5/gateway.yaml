@@ -3,6 +3,8 @@ kind: Gateway
 metadata:
   name: flash-gateway
   namespace: flash5
+annotations:
+  networking.gke.io/certmap: flash-cert-map
 spec:
   gatewayClassName: gke-l7-global-external-managed
   listeners:
@@ -18,8 +20,3 @@ spec:
     allowedRoutes:
       namespaces:
         from: Same
-    tls:
-      mode: Terminate
-      certificateRefs:
-      - name: flash-tls-secret
-        kind: Secret

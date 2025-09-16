@@ -21,7 +21,7 @@ spec:
     spec:
       containers:
       - name: app-container
-        image: us-east4-docker.pkg.dev/a38-int-aa-main-0/applications/flash-app:latest
+        image: us-east4-docker.pkg.dev/s69mr1c-frh-int-wm-main/applications/flash-app:latest
         ports:
         - containerPort: 8080
         env:

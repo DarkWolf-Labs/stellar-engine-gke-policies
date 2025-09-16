@@ -7,7 +7,7 @@ spec:
   parentRefs:
   - name: flash-gateway
   hostnames:
-  - "sclzs1.stellarengine.dev"
+  - "sclz-69-mr.stellarengine.dev"
   rules:
   - backendRefs:
     - name: flash-service

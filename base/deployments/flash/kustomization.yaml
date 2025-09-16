@@ -3,11 +3,11 @@ kind: Kustomization
 
 resources:
 - deployment.yaml
-#- frontend.yaml
-#- gateway.yaml
-#- httproute.yaml
+- frontend.yaml
+- gateway.yaml
+- httproute.yaml
 #- ingress.yaml
-#- managedCert.yaml
+- managedCert.yaml
 - namespace.yaml
 #- sa.yaml
 - service.yaml
